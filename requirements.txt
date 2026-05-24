@@ -1,0 +1,19 @@
+# Dependințe pentru detectarea plăcuțelor de înmatriculare
+
+# Computer Vision și procesarea imaginilor
+opencv-python>=4.8.0
+numpy>=1.24.0
+imutils>=0.5.4
+
+# OCR (Optical Character Recognition)
+pytesseract>=0.3.10
+
+# GUI Interface
+PyQt5>=5.15.0
+Pillow>=9.0.0
+
+# Database
+psycopg2-binary>=2.9.0
+
+# QR code
+qrcode[pil]>=7.4.2

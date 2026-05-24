@@ -1,0 +1,9 @@
+.venv
+debug_output
+img/*
+!img/Examples/
+src/__pycache__
+src/detector/__pycache__
+src/db/__pycache__
+src/gui/__pycache__
+qrcodes
