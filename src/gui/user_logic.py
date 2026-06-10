@@ -7,12 +7,16 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QRect
 import qrcode
 
-from db import enter_parking, pay_parking, leave_parking, create_database_connection
+from db import enter_parking, pay_parking, leave_parking, create_database_connection, count_cars_in_parking, fetch_active_subscription_plan_by_plate
+from config import MAX_PARKING_SPACES
+from db.user_service_db import fetch_user_by_plate, update_user_qr_path
 from gui.utils import QRCodeScannerThread, LiveEntryScannerThread
 from detector.debug_manager import debug_manager
 
 class UserLogicMixin:
     def set_entry_source_buttons(self, source):
+        # Seteaza starea butoanelor pentru sursa de intrare selectata
+
         self.entry_source = source
         if hasattr(self, "entry_live_btn") and hasattr(self, "entry_video_btn"):
             self.entry_live_btn.setObjectName("actionBtnActive" if source == "live" else "actionBtn")
@@ -24,11 +28,15 @@ class UserLogicMixin:
             self.entry_video_btn.style().polish(self.entry_video_btn)
 
     def select_entry_source_live(self):
+        # Opreste orice scanner activ si deschide dialogul pentru selectarea live-ului
+
         self.stop_entry_live_scanner()
         self.set_entry_source_buttons("live")
         self.start_entry_live_scanner()
 
     def select_entry_source_video(self):
+        # Opreste orice scanner live activ si deschide dialogul pentru selectarea unui fisier video
+
         self.stop_entry_live_scanner()
         self.set_entry_source_buttons("video")
 
@@ -44,53 +52,82 @@ class UserLogicMixin:
 
         self.start_entry_video_scanner(file_path)
 
-    def on_processing_finished(self, result_image, detected_text, plate_region):
+    def on_processing_finished(self, result_image, detected_text, _plate_region):
         # Handler pentru finalizarea procesarii
+
         if result_image is not None:
-            if hasattr(self, "enter_status_label"):
-                self.enter_status_label.hide()
             self.display_result_image(result_image)
-            
-            if detected_text:
-                # Apeleaza enter_parking automat cu numarul detectat
-                cod = enter_parking(detected_text)
-                if cod:
-                    self.result_label.setText(f"  {detected_text}    |    QR Cod generat")
-                    
-                    # Generare QR
-                    qr = qrcode.QRCode(
-                        version=1,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=10,
-                        border=4,
-                    )
-                    qr.add_data(cod)
-                    qr.make(fit=True)
-                    
-                    qr_img = qr.make_image(fill_color="black", back_color="white")
-                    
-                    # Salvam QR-ul intr-un folder dedicat cu numele masinii
-                    qr_folder = os.path.join(os.path.dirname(__file__), '..', '..', 'qrcodes')
-                    if not os.path.exists(qr_folder):
-                        os.makedirs(qr_folder)
-                    # Am inlocuit {cod} cu {detected_text} pt nume fisier masina
-                    qr_filename = os.path.join(qr_folder, f"qr_{detected_text}.png")
-                    qr_img.save(qr_filename)
-                    
-                    debug_manager.log(f"QR generat si salvat la: {qr_filename}")
-                else:
-                    self.result_label.setText(f"  {detected_text}    |    Eroare generare")
-                self.result_panel.setVisible(True)
-            else:
-                self.result_label.setText("  TEXT NOT READABLE")
-                self.result_label.setObjectName("statusErrorReadable")
-                self.result_panel.setVisible(True)
-        
+
+        if not detected_text:
+            self._show_unreadable_plate_message()
+            self.reset_timer.start(10000)
+            return
+
+        cod = enter_parking(detected_text)
+        if not cod:
+            self._show_qr_generation_error(detected_text)
+            self.reset_timer.start(10000)
+            return
+
+        self._save_detected_plate_qr(detected_text, cod)
+        self.result_label.setText(f"  {detected_text}    |    QR Cod generat")
+        self.result_panel.setVisible(True)
+
         # Porneste timer-ul pentru resetare dupa 10 secunde
-        self.reset_timer.start(10000)  # 10000 ms = 10 secunde
+        self.reset_timer.start(10000) 
+
+    def _show_unreadable_plate_message(self):
+        # Afiseaza mesaj de eroare cand textul detectat nu este lizibil
+        self.result_label.setText("  TEXT NOT READABLE")
+        self.result_label.setObjectName("statusErrorReadable")
+        self.result_panel.setVisible(True)
+
+    def _show_qr_generation_error(self, detected_text):
+        # Afiseaza mesaj de eroare cand nu se poate genera codul QR pentru textul detectat
+        self.result_label.setText(f"  {detected_text}    |    Eroare generare")
+        self.result_panel.setVisible(True)
+
+    def _save_detected_plate_qr(self, detected_text, cod):
+        # Genereaza cod QR pentru textul detectat si il salveaza in folderul corespunzator (users sau visitors)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(cod)
+        qr.make(fit=True)
+
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+
+        user_row = fetch_user_by_plate(detected_text)
+        qr_subfolder = "users" if user_row else "visitors"
+        qr_folder = os.path.join(os.path.dirname(__file__), '..', '..', 'qrcodes', qr_subfolder)
+        if not os.path.exists(qr_folder):
+            os.makedirs(qr_folder)
+        qr_filename = os.path.join(qr_folder, f"qr_{detected_text}.png")
+        qr_img.save(qr_filename)
+
+        if user_row:
+            update_user_qr_path(user_row[0], os.path.abspath(qr_filename))
+
+        debug_manager.log(f"QR generat si salvat la: {qr_filename}")
     
     def start_entry_live_scanner(self):
         # Porneste capturarea live pentru intrare
+
+        # Verificam daca sunt locuri disponibile inainte de a porni scanarea
+        try:
+            current = count_cars_in_parking()
+            if current >= MAX_PARKING_SPACES:
+                # Afisam mesaj si nu pornim scanarea
+                if hasattr(self, 'result_label'):
+                    self.result_label.setText("Parcarea este plină. Toate locurile sunt ocupate.")
+                return
+        except Exception:
+            # Daca nu se poate citi numarul, continuam si incercam sa pornim scanarea
+            pass
+
         if getattr(self, "entry_source", "live") != "live":
             return
 
@@ -103,11 +140,6 @@ class UserLogicMixin:
 
         self.image_display.show()
         self.result_panel.setVisible(False)
-        if hasattr(self, "enter_status_label"):
-            self.enter_status_label.setObjectName("statusWarning")
-            self.enter_status_label.setText("  Scaneaza placuta...")
-            self.enter_status_label.setStyle(self.enter_status_label.style())
-            self.enter_status_label.show()
 
         enable_debug = self.debug_checkbox.isChecked()
         self.entry_scanner_thread = LiveEntryScannerThread(enable_debug=enable_debug)
@@ -123,8 +155,23 @@ class UserLogicMixin:
         self.entry_scanner_thread.start()
 
     def start_entry_video_scanner(self, video_path):
+        # Porneste scanarea unui fisier video pentru intrare
+
         if not video_path:
             return
+
+        # Verificam daca sunt locuri disponibile inainte de a porni scanarea video
+        try:
+            current = count_cars_in_parking()
+            if current >= MAX_PARKING_SPACES:
+                # Afisam mesaj; nu pornim scanarea video, dar pastram butonul Enter activ
+                if hasattr(self, 'result_label'):
+                    self.result_label.setText("Parcarea este plină. Toate locurile sunt ocupate.")
+                return
+        except Exception:
+            pass
+
+        self.last_entry_video_path = video_path
 
         if hasattr(self, "entry_scanner_thread") and self.entry_scanner_thread and self.entry_scanner_thread.isRunning():
             return
@@ -133,11 +180,6 @@ class UserLogicMixin:
 
         self.image_display.show()
         self.result_panel.setVisible(False)
-        if hasattr(self, "enter_status_label"):
-            self.enter_status_label.setObjectName("statusWarning")
-            self.enter_status_label.setText("  Scaneaza placuta...")
-            self.enter_status_label.setStyle(self.enter_status_label.style())
-            self.enter_status_label.show()
 
         enable_debug = self.debug_checkbox.isChecked()
         self.entry_scanner_thread = LiveEntryScannerThread(enable_debug=enable_debug, video_path=video_path)
@@ -154,6 +196,7 @@ class UserLogicMixin:
 
     def stop_entry_live_scanner(self):
         # Opreste capturarea live daca este activa
+
         if hasattr(self, "entry_scanner_thread") and self.entry_scanner_thread:
             if self.entry_scanner_thread.isRunning():
                 self.entry_scanner_thread.stop()
@@ -162,29 +205,59 @@ class UserLogicMixin:
                     return
             self.entry_scanner_thread = None
 
+    # Debug mode toggle
+    def on_debug_toggled(self, _checked):
+        entry_thread = getattr(self, "entry_scanner_thread", None)
+        if entry_thread and entry_thread.isRunning():
+            if getattr(self, "entry_source", "live") == "live":
+                self.stop_entry_live_scanner()
+                self.start_entry_live_scanner()
+            else:
+                video_path = getattr(self, "last_entry_video_path", None)
+                if video_path:
+                    self.stop_entry_live_scanner()
+                    self.start_entry_video_scanner(video_path)
+
+        qr_thread = getattr(self, "qr_scanner_thread", None)
+        if qr_thread and qr_thread.isRunning():
+            qr_target = getattr(self, "current_qr_target", None)
+            self.stop_qr_scanner()
+            if qr_target:
+                self.start_qr_scanner(qr_target)
+
     def on_entry_frame_ready(self, q_image):
         # Actualizeaza preview-ul live pentru intrare
+
         pixmap = QPixmap.fromImage(q_image)
+        target_w = self.image_frame.width() - 10
+        target_h = self.image_frame.height() - 10
+        if target_w <= 0 or target_h <= 0:
+            return
+
         scaled_pixmap = pixmap.scaled(
-            self.image_frame.width() - 10,
-            self.image_frame.height() - 10,
-            Qt.KeepAspectRatio,
+            target_w,
+            target_h,
+            Qt.KeepAspectRatioByExpanding,
             Qt.SmoothTransformation
         )
+
+        # Decupeaza pixmap-ul pentru a se potrivi exact in chenar
+        if scaled_pixmap.width() > target_w or scaled_pixmap.height() > target_h:
+            x_offset = max(0, (scaled_pixmap.width() - target_w) // 2)
+            y_offset = max(0, (scaled_pixmap.height() - target_h) // 2)
+            scaled_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_w, target_h)
+
         self.image_display.setPixmap(scaled_pixmap)
 
     def on_entry_plate_detected(self, result_image, detected_text, plate_region):
         # Cand a fost detectata o placuta valida
+
         self.stop_entry_live_scanner()
         self.on_processing_finished(result_image, detected_text, plate_region)
 
     def on_entry_scan_error(self, error_message):
         # Eroare la capturarea live
-        if hasattr(self, "enter_status_label"):
-            self.enter_status_label.setObjectName("statusError")
-            self.enter_status_label.setText(f"  {error_message}")
-            self.enter_status_label.setStyle(self.enter_status_label.style())
-            self.enter_status_label.show()
+
         err_box = QMessageBox(self)
         set_dark_titlebar(err_box)
         err_box.setWindowTitle("Eroare camera")
@@ -207,6 +280,7 @@ class UserLogicMixin:
     def start_qr_scanner(self, target):
         # Porneste scanarea QR in functie de target
         # Daca exista deja un scanner activ, opreste-l si seteaza target-ul in asteptare
+
         if hasattr(self, "qr_scanner_thread") and self.qr_scanner_thread and self.qr_scanner_thread.isRunning():
             self.pending_qr_target = target
             self.stop_qr_scanner()
@@ -229,7 +303,8 @@ class UserLogicMixin:
         preview_label.show()
         self.ensure_qr_preview_size(preview_label)
 
-        self.qr_scanner_thread = QRCodeScannerThread()
+        enable_debug = self.debug_checkbox.isChecked() if hasattr(self, "debug_checkbox") else False
+        self.qr_scanner_thread = QRCodeScannerThread(enable_debug=enable_debug)
         self.qr_scanner_thread.frame_ready.connect(self.on_qr_frame_ready)
         self.qr_scanner_thread.code_detected.connect(self.on_qr_code_detected)
         self.qr_scanner_thread.error.connect(self.on_qr_scan_error)
@@ -243,6 +318,7 @@ class UserLogicMixin:
 
     def stop_qr_scanner(self):
         # Opreste camera daca este activa
+
         if hasattr(self, "qr_scanner_thread") and self.qr_scanner_thread:
             if self.qr_scanner_thread.isRunning():
                 self.qr_scanner_thread.stop()
@@ -253,6 +329,7 @@ class UserLogicMixin:
 
     def on_qr_frame_ready(self, q_image):
         # Actualizeaza preview-ul live al camerei
+
         if not hasattr(self, "current_qr_target"):
             return
 
@@ -280,6 +357,7 @@ class UserLogicMixin:
 
     def ensure_qr_preview_size(self, preview_label):
         # Adjustare dimensiuni zona scanare QR
+
         target_width = self.action_content.width()
         if target_width <= 0:
             target_width = 640
@@ -311,6 +389,7 @@ class UserLogicMixin:
 
     def on_qr_scan_error(self, error_message):
         # Afiseaza erori la scanare si opreste camera
+
         if hasattr(self, "current_qr_target") and self.current_qr_target == "pay":
             self.pay_status_label.show()
             self.pay_status_label.setObjectName("statusError")
@@ -325,6 +404,7 @@ class UserLogicMixin:
 
     def on_qr_scanner_stopped(self):
         # Ascunde preview-ul cand camera s-a oprit
+
         sender = self.sender()
         if sender is not None and sender is not self.qr_scanner_thread:
             return
@@ -345,6 +425,7 @@ class UserLogicMixin:
 
     def handle_check_payment(self):
         # Handler pentru butonul Verifica - calculeaza si afiseaza suma de plata
+
         cod = self.pay_code_input.text().strip()
         if not cod:
             self.pay_status_label.show()
@@ -377,6 +458,20 @@ class UserLogicMixin:
                 return
             
             ora_intrare, ora_platire = row
+            user_subscription = fetch_active_subscription_plan_by_plate(
+                self._get_plate_for_payment(cursor, cod)
+            )
+            if user_subscription:
+                self.pay_status_label.show()
+                self.pay_status_label.setObjectName("statusSuccess")
+                self.pay_status_label.setText("  Aveti abonament activ. Indreptati-va catre iesire.")
+                self.pay_status_label.setStyle(self.pay_status_label.style())
+                self.pay_code_input.clear()
+                self.pay_code_input.hide()
+                self.pay_info_frame.hide()
+                self.pending_payment_code = None
+                return
+
             ora_actuala = datetime.now()
             
             # Calculam timpul
@@ -427,8 +522,22 @@ class UserLogicMixin:
             if conn:
                 conn.close()
 
+    def _get_plate_for_payment(self, cursor, cod):
+        # Obtine numarul de inmatriculare asociat codului pentru a verifica abonamentul
+        cursor.execute(
+            """
+            SELECT numar_inmatriculare
+            FROM masini
+            WHERE cod = %s
+            """,
+            (cod,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
+
     def handle_confirm_payment(self):  
         # Handler pentru butonul Plata - confirma si inregistreaza plata
+
         if not hasattr(self, 'pending_payment_code') or not self.pending_payment_code:
             self.pay_status_label.show()
             self.pay_status_label.setObjectName("statusWarning")
@@ -456,6 +565,7 @@ class UserLogicMixin:
 
     def handle_leave_parking(self):
         #Handler pentru Leave - apeleaza leave_parking din db
+
         cod = self.leave_code_input.text().strip()
         if not cod:
             self.leave_status_label.show()
@@ -493,6 +603,7 @@ class UserLogicMixin:
     
     def reset_interface(self):
         # Reseteaza interfata la starea initiala pentru o noua intrare
+
         self.image_display.clear()
         self.image_display.show()
         
@@ -509,8 +620,9 @@ class UserLogicMixin:
     
     def display_result_image(self, cv_image):
         # Afiseaza imaginea cu rezultatul
+
         try:
-            # Convert to RGB for display
+            # Converteste imaginea din format OpenCV (BGR) in format RGB
             rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w

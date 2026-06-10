@@ -1,11 +1,11 @@
-/* Main Window */
+/* Fereastra principala */
 QMainWindow {
     background-color: #1e1e1e;
     font-family: 'Segoe UI', 'Arial', sans-serif;
     color: #e0e0e0;
 }
 
-/* MODE SELECTOR BUTTONS (User/Admin) */
+/* Butoane Admin/User */
 QPushButton#modeBtn {
     background-color: #2d2d2d;
     color: #b0b0b0;
@@ -33,7 +33,7 @@ QPushButton#modeBtnActive {
     min-width: 140px;
 }
 
-/*  ACTION BUTTONS (Enter/Pay/Exit)  */
+/*  Butoane Intrare/Plata/Iesire  */
 QPushButton#actionBtn {
     background-color: #2d2d2d;
     color: #b0b0b0;
@@ -64,7 +64,7 @@ QPushButton#actionBtnActive {
     margin: 0 6px;
 }
 
-/*  PRIMARY ACTION BUTTONS  */
+/*  Butoane principale  */
 QPushButton#primaryBtn {
     background-color: #d946a6;
     padding: 5px;
@@ -90,7 +90,7 @@ QPushButton#primaryBtn:disabled {
     color: #777777;
 }
 
-/*  UPLOAD BUTTON  */
+/*  Buton Upload  */
 QPushButton#uploadBtn {
     background-color: transparent;
     color: #d946a6;
@@ -112,7 +112,7 @@ QPushButton#uploadBtn:pressed {
     background-color: rgba(217, 70, 166, 0.2);
 }
 
-/*  FRAMES */
+/*  Frame-uri  */
 QFrame#topBar {
     background-color: #252525;
     border-bottom: 1px solid #3d3d3d;
@@ -142,7 +142,7 @@ QFrame#imageFrame {
     border-radius: 8px;
 }
 
-/* LABELS */
+/* */
 QLabel {
     color: #e0e0e0;
     font-size: 13px;
@@ -178,13 +178,13 @@ QLabel#resultLabel {
     padding: 15px 25px;
 }
 
-/*  SCROLL AREA  */
+/*  Zona Scroll  */
 QScrollArea {
     border: none;
     background-color: transparent;
 }
 
-/*  PROGRESS BAR */
+/*  Bara progres */
 QProgressBar {
     border: 1px solid #3d3d3d;
     border-radius: 4px;
@@ -198,7 +198,7 @@ QProgressBar::chunk {
     border-radius: 3px;
 }
 
-/*  CHECKBOX (Debug Mode)  */
+/*  Checkbox (Mod Debug)  */
 QCheckBox {
     color: #cccccc;
     font-size: 13px;
@@ -222,7 +222,7 @@ QCheckBox::indicator:hover {
     border-color: #d946a6;
 }
 
-/*  SCROLLBAR (dark theme)  */
+/*  Scrollbar (tema inchisa)  */
 QScrollBar:vertical {
     background: #252525;
     width: 12px;
@@ -263,7 +263,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     width: 0px;
 }
 
-/*  ADMIN RESULTS TABLE  */
+/*  Tabel rezultate admin  */
 QTableWidget#adminResults {
     background-color: #1a1a1a;
     alternate-background-color: #252525;
@@ -290,7 +290,7 @@ QTableWidget#adminResults::item:selected {
     color: #ffffff;
 }
 
-/* Scrollbars for admin table */
+/* Scrollbar pentru tabel admin */
 QTableWidget#adminResults QScrollBar:vertical {
     background: #252525;
     width: 12px;
@@ -303,7 +303,7 @@ QTableWidget#adminResults QScrollBar::handle:vertical {
     border-radius: 6px;
 }
 
-/* Section Titles (Enter, Pay, Exit, Admin) */
+/* Titluri sectiuni (Intrare, Plata, Iesire, Admin) */
 QLabel#sectionTitle {
     font-size: 18px;
     font-weight: bold;
@@ -311,21 +311,21 @@ QLabel#sectionTitle {
     padding: 8px 0px 8px 0px;
 }
 
-/* Image Display Border Container */
+/* Container chenar afisare imagine */
 QLabel#imageDisplay {
     border: 2px dashed #d946a6;
     background-color: transparent;
     border-radius: 8px;
 }
 
-/* QR Live Preview */
+/* Preview live QR */
 QLabel#qrPreview {
     border: 2px dashed #d946a6;
     background-color: transparent;
     border-radius: 8px;
 }
 
-/* Code Inputs (Read-only inputs after scan) */
+/* Input cod  */
 QLineEdit#codeInput {
     border: none;
     background-color: #252525;
@@ -335,13 +335,13 @@ QLineEdit#codeInput {
     font-size: 14px;
 }
 
-/* Pay Info Frame */
+/* Frame informatii plata */
 QFrame#payInfoFrame {
     background-color: #252525;
     border-radius: 8px;
 }
 
-/* Pay Confirm Button */
+/* Buton confirmare plata */
 QPushButton#payConfirmBtn {
     background-color: transparent;
     color: #d946a6;
@@ -359,7 +359,7 @@ QPushButton#payConfirmBtn:pressed {
     background-color: rgba(217, 70, 166, 0.2);
 }
 
-/* Car Count Label */
+/* Eticheta numar masini */
 QLabel#carCountLabel {
     font-size: 16px;
     font-weight: bold;
@@ -367,7 +367,7 @@ QLabel#carCountLabel {
     padding: 10px;
 }
 
-/* Quick Action / Small Dynamic Buttons in tables */
+/* Actiuni rapide / butoane mici in tabele */
 QPushButton#smallActionBtn {
     background-color: #d946a6;
     color: white;
@@ -376,7 +376,7 @@ QPushButton#smallActionBtn {
     padding: 5px;
 }
 
-/* DIALOGS AND MESSAGE BOXES  */
+/* Dialoguri si MessageBox  */
 QMessageBox, QDialog {
     background-color: #1e1e1e;
 }
@@ -443,7 +443,7 @@ QTableWidget#adminResults QScrollBar::handle:horizontal:hover {
     background: #4d4d4d;
 }
 
-/*  LINE EDIT (Input Fields)  */
+/*  Line Edit (campuri input)  */
 QLineEdit {
     background-color: #2d2d2d;
     color: #e0e0e0;
@@ -458,7 +458,7 @@ QLineEdit:focus {
     background-color: #353535;
 }
 
-/*  STATUS MESSAGES  */
+/*  Mesaje status  */
 QLabel#statusWarning {
     color: #f39c12;
     font-size: 16px;
@@ -499,7 +499,7 @@ QLabel#statusErrorReadable {
     padding: 15px 25px;
 }
 
-/*  PAY INFO LABELS  */
+/*  Etichete informatii plata  */
 QLabel#payMinutesLabel {
     font-size: 16px;
     font-weight: bold;
@@ -524,7 +524,7 @@ QMessageBox QLabel, QDialog QLabel { color: #ffffff; font-size: 14px; font-weigh
 QMessageBox QPushButton, QDialog QPushButton { background-color: #333333; color: white; border: none; border-radius: 4px; padding: 8px 15px; font-weight: bold; min-width: 60px; }
 QMessageBox QPushButton:hover, QDialog QPushButton:hover { background-color: #444444; }
 
-/*  TABLE ACTION BUTTONS  */
+/*  Butoane actiuni tabel  */
 QPushButton#tableActionBtn {
     background-color: #d946a6;
     color: #ffffff;
@@ -542,7 +542,7 @@ QPushButton#tableActionBtn:pressed {
     background-color: #a82e7e;
 }
 
-/*  INPUT SPINNERS  */
+/*  SpinBox / Input numeric  */
 QSpinBox, QDoubleSpinBox {
     background-color: #2d2d2d;
     color: #ffffff;

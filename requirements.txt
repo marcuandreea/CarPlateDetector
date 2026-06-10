@@ -15,5 +15,11 @@ Pillow>=9.0.0
 # Database
 psycopg2-binary>=2.9.0
 
+# FastAPI backend
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+
 # QR code
 qrcode[pil]>=7.4.2

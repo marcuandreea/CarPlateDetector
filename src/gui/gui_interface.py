@@ -4,11 +4,11 @@ import ctypes
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QSizePolicy,
                             QWidget, QPushButton, QLabel, QGridLayout,
-                            QFrame, QMessageBox, QCheckBox, QLineEdit, QTableWidget, QTableWidgetItem)
+                            QFrame, QMessageBox, QCheckBox, QLineEdit, QTableWidget, QTableWidgetItem, QTabWidget)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QIcon
 
-# Add parent directory to path for imports
+# Adaugam calea catre directorul src pentru a putea importa modulele
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from db import (create_database_connection, create_tables,
@@ -134,7 +134,7 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         action_content_layout.setContentsMargins(0, 0, 0, 0)
         action_content_layout.setSpacing(0)
         
-        # ENTER PARKING CONTENT 
+        # ENTER PARKING CONTENT
         self.enter_content = QWidget()
         enter_layout = QVBoxLayout(self.enter_content)
         enter_layout.setContentsMargins(0, 0, 0, 0)
@@ -146,9 +146,15 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         enter_title.setObjectName("sectionTitle")
         enter_layout.addWidget(enter_title)
         
+        # Label locuri disponibile
+        self.available_spots_label = QLabel("")
+        self.available_spots_label.setAlignment(Qt.AlignCenter)
+        self.available_spots_label.setObjectName("availableSpotsLabel")
+        enter_layout.addWidget(self.available_spots_label)
+        
         self.image_frame = QFrame()
         self.image_frame.setObjectName("imageFrame")
-        self.image_frame.setFixedHeight(394)  # Inaltime redusa pentru a se potrivi cu chenarul
+        self.image_frame.setFixedHeight(394) 
         
         image_frame_layout = QGridLayout(self.image_frame)
         image_frame_layout.setContentsMargins(0, 0, 0, 0)
@@ -162,39 +168,19 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         image_frame_layout.addWidget(self.image_display, 0, 0)
         self.image_display.show()
 
-        self.result_panel = QFrame()
-        self.result_panel.setStyleSheet("background: transparent;")
-        result_layout = QHBoxLayout(self.result_panel)
-        result_layout.setContentsMargins(0, 0, 0, 20)
-        result_layout.addStretch()
-        
-        self.result_label = QLabel("")
-        self.result_label.setObjectName("resultLabel")
-        result_layout.addWidget(self.result_label)
-        
-        result_layout.addStretch()
-        self.result_panel.setVisible(False)
-        
-        image_frame_layout.addWidget(self.result_panel, 0, 0, Qt.AlignBottom | Qt.AlignHCenter)
-        
         enter_layout.addWidget(self.image_frame)
-        enter_layout.addSpacing(15)
+        enter_layout.addSpacing(10)
 
-        self.enter_status_label = QLabel("")
-        self.enter_status_label.setObjectName("statusWarning")
-        self.enter_status_label.setAlignment(Qt.AlignCenter)
-        self.enter_status_label.hide()
-        enter_layout.addWidget(self.enter_status_label)
-
-        # Frame pentru butoanele de actiune (pentru a le putea ascunde impreuna)
+        # Frame pentru butoanele de actiune 
         self.enter_action_frame = QFrame()
         enter_action_layout = QHBoxLayout(self.enter_action_frame)
         enter_action_layout.setContentsMargins(0, 0, 0, 0)
         enter_action_layout.addStretch()
         
-        # Debug mode checkbox (styling in styles.css)
+        # Debug mode checkbox 
         self.debug_checkbox = QCheckBox("Enable Debug Mode (save images & logs)")
-        self.debug_checkbox.setChecked(True)  # Activat by default
+        self.debug_checkbox.setChecked(False)
+        self.debug_checkbox.toggled.connect(self.on_debug_toggled)
         enter_action_layout.addWidget(self.debug_checkbox)
         
         enter_action_layout.addSpacing(12)
@@ -215,6 +201,20 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         
         enter_action_layout.addStretch()
         enter_layout.addWidget(self.enter_action_frame)
+
+        self.result_panel = QFrame()
+        self.result_panel.setStyleSheet("background: transparent;")
+        result_layout = QHBoxLayout(self.result_panel)
+        result_layout.setContentsMargins(0, 10, 0, 0)
+        result_layout.addStretch()
+
+        self.result_label = QLabel("")
+        self.result_label.setObjectName("resultLabel")
+        result_layout.addWidget(self.result_label)
+
+        result_layout.addStretch()
+        self.result_panel.setVisible(False)
+        enter_layout.addWidget(self.result_panel)
         
         enter_layout.addStretch()
         
@@ -242,7 +242,7 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         self.pay_qr_preview.hide()
         pay_layout.addWidget(self.pay_qr_preview)
         
-        # Input cod (read-only pt a arata rezultatul decodarii)
+        # Input cod 
         self.pay_code_input = QLineEdit()
         self.pay_code_input.setPlaceholderText("Codul unic din QR va aparea aici...")
         self.pay_code_input.setObjectName("codeInput")
@@ -312,7 +312,7 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         self.leave_qr_preview.hide()
         exit_layout.addWidget(self.leave_qr_preview)
 
-        # Input cod (read-only)
+        # Input cod 
         self.leave_code_input = QLineEdit()
         self.leave_code_input.setPlaceholderText("Codul unic din QR va aparea aici...")
         self.leave_code_input.setObjectName("codeInput")
@@ -340,7 +340,6 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         self.leave_status_label.hide()
         exit_layout.addWidget(self.leave_status_label)
         
-        # Impinge totul in sus
         exit_layout.addStretch()
         
         action_content_layout.addWidget(self.exit_content)
@@ -355,59 +354,82 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         admin_layout.setContentsMargins(0, 0, 0, 0)
         admin_layout.setSpacing(20)
 
-        # Car count display deasupra butoanelor
         self.car_count_label = QLabel()
         self.car_count_label.setObjectName("carCountLabel")
         self.car_count_label.setAlignment(Qt.AlignCenter)
         self.update_car_count()
+
+        self.stats_timer = QTimer()
+        self.stats_timer.timeout.connect(self.update_car_count)
+        self.stats_timer.start(5000)
         admin_layout.addWidget(self.car_count_label)
 
-        # Admin action buttons (similar cu User Enter/Pay/Leave)
-        admin_actions_frame = QFrame()
-        admin_actions_layout = QHBoxLayout(admin_actions_frame)
-        admin_actions_layout.setContentsMargins(0, 10, 0, 10)
-        admin_actions_layout.addStretch()
+        self.admin_tabs = QTabWidget()
+        self.admin_tabs.currentChanged.connect(self.on_admin_tab_changed)
 
-        self.masini_btn = QPushButton("Masini")
-        self.masini_btn.setObjectName("actionBtn")
-        self.masini_btn.clicked.connect(self.handle_show_masini)
-        self.masini_btn.setCursor(Qt.PointingHandCursor)
-        admin_actions_layout.addWidget(self.masini_btn)
+        # Functie pentru a construi tabelele din taburile admin cu setari comune
+        def build_admin_table():
+            table = QTableWidget()
+            table.setObjectName("adminResults")
+            table.setMinimumHeight(300)
+            table.setEditTriggers(QTableWidget.NoEditTriggers)
+            table.setSelectionBehavior(QTableWidget.SelectRows)
+            table.setSelectionMode(QTableWidget.SingleSelection)
+            table.setAlternatingRowColors(True)
+            table.setSortingEnabled(True)
+            table.horizontalHeader().setStretchLastSection(True)
+            table.verticalHeader().setVisible(False)
+            table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            return table
 
-        self.taxe_btn = QPushButton("Taxe")
-        self.taxe_btn.setObjectName("actionBtn")
-        self.taxe_btn.clicked.connect(self.handle_show_taxe)
-        self.taxe_btn.setCursor(Qt.PointingHandCursor)
-        admin_actions_layout.addWidget(self.taxe_btn)
+        self.admin_masini_table = build_admin_table()
+        masini_tab = QWidget()
+        masini_layout = QVBoxLayout(masini_tab)
+        masini_layout.setContentsMargins(0, 0, 0, 0)
+        masini_layout.addWidget(self.admin_masini_table)
+        self.admin_tabs.addTab(masini_tab, "Masini")
 
-        admin_actions_layout.addStretch()
-        admin_layout.addWidget(admin_actions_frame)
+        self.admin_taxe_table = build_admin_table()
+        taxe_tab = QWidget()
+        taxe_layout = QVBoxLayout(taxe_tab)
+        taxe_layout.setContentsMargins(0, 0, 0, 0)
+        taxe_layout.addWidget(self.admin_taxe_table)
+        self.admin_tabs.addTab(taxe_tab, "Taxe")
 
-        # Results display area (table format)
-        self.admin_results = QTableWidget()
-        self.admin_results.setObjectName("adminResults")
-        self.admin_results.setMinimumHeight(300)
-        self.admin_results.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.admin_results.setSelectionBehavior(QTableWidget.SelectRows)
-        self.admin_results.setSelectionMode(QTableWidget.SingleSelection)
-        self.admin_results.setAlternatingRowColors(True)
-        self.admin_results.setSortingEnabled(True)
-        self.admin_results.horizontalHeader().setStretchLastSection(True)
-        self.admin_results.verticalHeader().setVisible(False)
-        
-        # Disable horizontal scrollbar completely
-        self.admin_results.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        
-        admin_layout.addWidget(self.admin_results)
-        
-        # Add Taxa Button
+        self.admin_subscriptions_table = build_admin_table()
+        subscriptions_tab = QWidget()
+        subscriptions_layout = QVBoxLayout(subscriptions_tab)
+        subscriptions_layout.setContentsMargins(0, 0, 0, 0)
+        subscriptions_layout.addWidget(self.admin_subscriptions_table)
+        self.admin_tabs.addTab(subscriptions_tab, "Abonamente")
+
+        self.admin_user_subscriptions_table = build_admin_table()
+        user_subscriptions_tab = QWidget()
+        user_subscriptions_layout = QVBoxLayout(user_subscriptions_tab)
+        user_subscriptions_layout.setContentsMargins(0, 0, 0, 0)
+        user_subscriptions_layout.addWidget(self.admin_user_subscriptions_table)
+        self.admin_tabs.addTab(user_subscriptions_tab, "Abonamente Useri")
+
+        self.admin_users_table = build_admin_table()
+        users_tab = QWidget()
+        users_layout = QVBoxLayout(users_tab)
+        users_layout.setContentsMargins(0, 0, 0, 0)
+        users_layout.addWidget(self.admin_users_table)
+        self.admin_tabs.addTab(users_tab, "Users")
+
+        admin_layout.addWidget(self.admin_tabs)
+
         self.add_taxa_btn = QPushButton("Adauga Taxa Noua")
         self.add_taxa_btn.setObjectName("actionBtnActive")
         self.add_taxa_btn.setCursor(Qt.PointingHandCursor)
         self.add_taxa_btn.setMinimumHeight(40)
-        self.add_taxa_btn.clicked.connect(self.handle_add_taxa)
+        self.add_taxa_btn.clicked.connect(self.handle_add_action)
         admin_layout.addWidget(self.add_taxa_btn)
-        self.add_taxa_btn.hide() # Ascundem pana cand adminul apasa pe "Taxe"
+        self.add_taxa_btn.hide()
+
+        self.admin_results = self.admin_masini_table
+        self.current_admin_tab = "masini"
+        self.refresh_admin_tab()
 
         panels_layout.addWidget(self.admin_panel)
         self.admin_panel.hide()
@@ -453,26 +475,34 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         if self.current_action == action:
             return
 
+        self._stop_user_scanners()
+        self.current_action = action
+
+        self._set_action_button_state(action)
+        self._show_action_content(action)
+        self._reset_action_state(action)
+
+    def _stop_user_scanners(self):
         if hasattr(self, "stop_qr_scanner"):
             self.stop_qr_scanner()
         if hasattr(self, "stop_entry_live_scanner"):
             self.stop_entry_live_scanner()
-            
-        self.current_action = action
-        
+
+    def _set_action_button_state(self, action):
         self.enter_btn.setObjectName("actionBtnActive" if action == "enter" else "actionBtn")
         self.pay_btn.setObjectName("actionBtnActive" if action == "pay" else "actionBtn")
         self.exit_btn.setObjectName("actionBtnActive" if action == "exit" else "actionBtn")
-        
+
         for btn in [self.enter_btn, self.pay_btn, self.exit_btn]:
             btn.style().unpolish(btn)
             btn.style().polish(btn)
-        
+
+    def _show_action_content(self, action):
         self.enter_content.setVisible(action == "enter")
         self.pay_content.setVisible(action == "pay")
         self.exit_content.setVisible(action == "exit")
-        
-        # Resetam vizibilitatea si continutul cand schimbam sectiunea
+
+    def _reset_action_state(self, action):
         if action == "enter":
             if hasattr(self, "start_entry_live_scanner") and getattr(self, "entry_source", "live") == "live":
                 self.start_entry_live_scanner()
@@ -494,6 +524,26 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
             self.leave_status_label.hide()
             if hasattr(self, "start_qr_scanner_for_leave"):
                 self.start_qr_scanner_for_leave()
+
+    def on_admin_tab_changed(self, index):
+        # Sincronizeaza tabelul curent si reface continutul la schimbarea tabului
+        tab_map = {
+            0: ("masini", "admin_masini_table"),
+            1: ("taxe", "admin_taxe_table"),
+            2: ("subscriptions", "admin_subscriptions_table"),
+            3: ("user_subscriptions", "admin_user_subscriptions_table"),
+            4: ("users", "admin_users_table"),
+        }
+
+        current_tab, table_attr = tab_map.get(index, ("masini", "admin_masini_table"))
+        current_table = getattr(self, table_attr, None)
+        if current_table is None:
+            return
+        self.current_admin_tab = current_tab
+        self.admin_results = current_table
+
+        if hasattr(self, "refresh_admin_tab"):
+            self.refresh_admin_tab()
             
 
 def main():

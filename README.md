@@ -27,8 +27,8 @@ python src/gui/gui_interface.py
 
 - **Graphical Interface (PyQt5)**: Fast and intuitive system with User mode (for entry/exit/payment scans) and Administrator mode (for logs and settings), styled with CSS.
 - **Native Dark Mode**: Automatic support for window title bars (Windows DWM API) and modern widget design.
-- **Automatic Plate Detection**: Uses contour analysis, aspect-ratio filtering, and EU flag removal to accurately identify Romanian license plates (LPR/ANPR).
-- **Payment and Exit (QR Codes)**: Generation of temporary tickets with scannable QR codes for payment processing.
+- **Automatic Plate Detection**: Live camera or uploaded video input, with contour analysis, aspect-ratio filtering, and EU flag removal to accurately identify license plates.
+- **Payment and Exit (QR Codes)**: Generation of temporary tickets with scannable QR codes for payment processing, plus live camera scanning for payment and exit.
 - **Database (PostgreSQL)**: Chronological management of vehicles, visit logging, and dynamic duration-based taxation.
 - **Dynamic Taxes (Admin)**: Secure interface to edit pricing and time parameters.
 - **Async Processing (Threading)**: Background workers for image processing (LPR, QR) without freezing the GUI.

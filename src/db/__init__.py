@@ -11,7 +11,20 @@ from .db import (
     count_cars_in_parking,
     add_taxa,
     delete_taxa,
-    delete_masina
+    delete_masina,
+    fetch_subscription_plans,
+    fetch_subscription_plan_types,
+    create_subscription_plan,
+    update_subscription_plan,
+    delete_subscription_plan,
+    fetch_user_subscriptions,
+    delete_user_subscription,
+    fetch_users_for_admin,
+    delete_user_by_id,
+    activate_subscription,
+    deactivate_user_subscriptions,
+    create_user_subscription,
+    fetch_active_subscription_plan_by_plate,
 )
 
 __all__ = [
@@ -26,5 +39,18 @@ __all__ = [
     'count_cars_in_parking',
     'add_taxa',
     'delete_taxa',
-    'delete_masina'
+    'delete_masina',
+    'fetch_subscription_plans',
+    'fetch_subscription_plan_types',
+    'create_subscription_plan',
+    'update_subscription_plan',
+    'delete_subscription_plan',
+    'fetch_user_subscriptions',
+    'delete_user_subscription',
+    'fetch_users_for_admin',
+    'delete_user_by_id',
+    'activate_subscription',
+    'deactivate_user_subscriptions',
+    'create_user_subscription',
+    'fetch_active_subscription_plan_by_plate'
 ]

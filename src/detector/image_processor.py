@@ -6,7 +6,7 @@ from .debug_manager import debug_manager
 class ImageProcessor:
     
     def preprocess_image(self, image):
-       # Preproceseaza imaginea pentru detectarea contururilor.
+       # Preproceseaza imaginea pentru detectarea contururilor
         
         # Conversie la gri
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -84,7 +84,7 @@ class ImageProcessor:
         return gray_plate
     
     def draw_detection_result(self, image, bbox, detected_text):
-        # Deseneaza rezultatul detectiei pe imagine.
+        # Deseneaza rezultatul detectiei pe imagine
      
         x, y, w, h = bbox
         result_image = image.copy()

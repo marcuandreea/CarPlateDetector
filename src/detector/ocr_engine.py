@@ -22,8 +22,7 @@ class OCREngine:
             debug_manager.log(f"Nu gasesc Tesseract la: {tesseract_path}")
         
     def extract_text_with_ocr(self, plate_image):
-    
-        # Extrage textul dintr-o imagine de placuta folosind pytesseract.
+        # Extrage textul dintr-o imagine de placuta folosind pytesseract
        
         debug_manager.log("Aplic OCR pentru text...")
         

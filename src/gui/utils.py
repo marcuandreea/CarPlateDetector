@@ -13,6 +13,7 @@ from detector.debug_manager import debug_manager
 
 def set_dark_titlebar(window):
     # Seteaza titlebar-ul ferestrei in Dark Mode
+
     if sys.platform == "win32":
         try:
             hwnd = int(window.winId())
@@ -29,14 +30,16 @@ def set_dark_titlebar(window):
 
 class QRCodeDecoderThread(QThread):
     # Thread pentru decodarea unui QR dintr-o imagine selectata pentru Plata sau Iesire
+
     finished = pyqtSignal(str)
-    """Semnal trimis cu textul decodat din QR."""
+    # Semnal pentru a transmite codul decodat inapoi la GUI
 
     def __init__(self, qr_image_path):
         super().__init__()
         self.qr_image_path = qr_image_path
 
     def run(self):
+
         try:
             # Citeste folosind OpenCV si QrCodeDetector intern
             qr_img = cv2.imread(self.qr_image_path)
@@ -55,12 +58,14 @@ class QRCodeDecoderThread(QThread):
 
 class QRCodeScannerThread(QThread):
     # Thread pentru scanarea codurilor QR in timp real din camera web
+
     frame_ready = pyqtSignal(object)
     code_detected = pyqtSignal(str)
     error = pyqtSignal(str)
     stopped = pyqtSignal()
 
-    def __init__(self, camera_index=1, motion_pixel_threshold=1000, motion_idle_seconds=3.0, roi_scale=0.6):
+    def __init__(self, camera_index=1, motion_pixel_threshold=1000, motion_idle_seconds=3.0, roi_scale=0.6,
+                 enable_debug=False):
         super().__init__()
         self.camera_index = camera_index
         self._running = True
@@ -69,6 +74,7 @@ class QRCodeScannerThread(QThread):
         self.motion_idle_seconds = motion_idle_seconds
         self.roi_scale = roi_scale
         self._roi_size = None
+        self.enable_debug = enable_debug
 
     def stop(self):
         self._running = False
@@ -139,23 +145,24 @@ class QRCodeScannerThread(QThread):
                     if not data:
                         data, _, _ = detector.detectAndDecode(roi_frame)
 
-                # Deseneaza colturile patratului pentru zona de scanare
-                corner_len = max(12, int(roi_size * 0.08))
-                color = (166, 70, 217)
-                thickness = 2
+                # Deseneaza colturile patratului pentru zona de scanare doar in debug
+                if self.enable_debug:
+                    corner_len = max(12, int(roi_size * 0.08))
+                    color = (166, 70, 217)
+                    thickness = 2
 
-                # Stanga sus
-                cv2.line(frame, (roi_x, roi_y), (roi_x + corner_len, roi_y), color, thickness)
-                cv2.line(frame, (roi_x, roi_y), (roi_x, roi_y + corner_len), color, thickness)
-                # Dreapta sus
-                cv2.line(frame, (roi_x + roi_size, roi_y), (roi_x + roi_size - corner_len, roi_y), color, thickness)
-                cv2.line(frame, (roi_x + roi_size, roi_y), (roi_x + roi_size, roi_y + corner_len), color, thickness)
-                # Stanga jos
-                cv2.line(frame, (roi_x, roi_y + roi_size), (roi_x + corner_len, roi_y + roi_size), color, thickness)
-                cv2.line(frame, (roi_x, roi_y + roi_size), (roi_x, roi_y + roi_size - corner_len), color, thickness)
-                # Dreapta jos
-                cv2.line(frame, (roi_x + roi_size, roi_y + roi_size), (roi_x + roi_size - corner_len, roi_y + roi_size), color, thickness)
-                cv2.line(frame, (roi_x + roi_size, roi_y + roi_size), (roi_x + roi_size, roi_y + roi_size - corner_len), color, thickness)
+                    # Stanga sus
+                    cv2.line(frame, (roi_x, roi_y), (roi_x + corner_len, roi_y), color, thickness)
+                    cv2.line(frame, (roi_x, roi_y), (roi_x, roi_y + corner_len), color, thickness)
+                    # Dreapta sus
+                    cv2.line(frame, (roi_x + roi_size, roi_y), (roi_x + roi_size - corner_len, roi_y), color, thickness)
+                    cv2.line(frame, (roi_x + roi_size, roi_y), (roi_x + roi_size, roi_y + corner_len), color, thickness)
+                    # Stanga jos
+                    cv2.line(frame, (roi_x, roi_y + roi_size), (roi_x + corner_len, roi_y + roi_size), color, thickness)
+                    cv2.line(frame, (roi_x, roi_y + roi_size), (roi_x, roi_y + roi_size - corner_len), color, thickness)
+                    # Dreapta jos
+                    cv2.line(frame, (roi_x + roi_size, roi_y + roi_size), (roi_x + roi_size - corner_len, roi_y + roi_size), color, thickness)
+                    cv2.line(frame, (roi_x + roi_size, roi_y + roi_size), (roi_x + roi_size, roi_y + roi_size - corner_len), color, thickness)
 
                 # Convertim cadrul la format QImage pentru a fi afisat in GUI
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -179,6 +186,7 @@ class QRCodeScannerThread(QThread):
 
 class LiveEntryScannerThread(QThread):
     # Thread pentru capturare live si detectare placute cu motion detection in ROI
+
     frame_ready = pyqtSignal(object)
     plate_detected = pyqtSignal(object, str, object)
     error = pyqtSignal(str)
@@ -308,16 +316,17 @@ class LiveEntryScannerThread(QThread):
                         self.plate_detected.emit(result_image, data, plate_region)
                         break
 
-                # Deseneaza dreptunghiul ROI
-                color = (217, 70, 166)
-                thickness = 2
-                cv2.rectangle(
-                    frame,
-                    (roi_x, roi_y),
-                    (roi_x + roi_width, roi_y + roi_height),
-                    color,
-                    thickness
-                )
+                # Deseneaza dreptunghiul ROI doar in debug
+                if self.enable_debug:
+                    color = (217, 70, 166)
+                    thickness = 2
+                    cv2.rectangle(
+                        frame,
+                        (roi_x, roi_y),
+                        (roi_x + roi_width, roi_y + roi_height),
+                        color,
+                        thickness
+                    )
 
                 # Desenare preview
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -333,5 +342,3 @@ class LiveEntryScannerThread(QThread):
             cap.release()
             self._cap = None
             self.stopped.emit()
-
-

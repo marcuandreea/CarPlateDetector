@@ -7,15 +7,18 @@ from datetime import datetime
 class DebugManager:
     # Manager pentru logging si debugging al sistemului de detectie placute
     
-    def __init__(self, log_file_path="debug_output/debug_log.txt"):
+    def __init__(self, log_file_path=None):
         
-        # Initializeaza managerul de debug.
-        
+        # Initializeaza managerul de debug
+        if log_file_path is None:
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            log_file_path = os.path.join(project_root, "debug_output", "debug_log.txt")
+
         self.log_file_path = log_file_path
         self.debug_enabled = False  # Debug dezactivat implicit
         
     def set_debug_mode(self, enabled):
-        # Activeaza sau dezactiveaza modul debug.
+        # Activeaza sau dezactiveaza modul debug
         
         self.debug_enabled = enabled
         if enabled:
@@ -41,7 +44,7 @@ class DebugManager:
             print(f"Eroare la initializarea log-ului: {e}")
     
     def log(self, message):
-        # Scrie un mesaj in fisierul de log doar daca debug este activat.
+        # Scrie un mesaj in fisierul de log doar daca debug este activat
         
         if not self.debug_enabled:
             return
@@ -57,7 +60,7 @@ class DebugManager:
             print(f"Eroare la logging: {e}")
     
     def log_time(self):
-         # Termina cronometrarea si afiseaza timpul de executie doar daca debug este activat.
+         # Termina cronometrarea si afiseaza timpul de executie doar daca debug este activat
         
         if not self.debug_enabled:
             return
@@ -73,13 +76,14 @@ class DebugManager:
         self.log(f"Timp executie: {time_str}")
     
     def save_debug_image(self, image, filename):
-        # Salveaza o imagine debug doar daca modul debug este activat.
+        # Salveaza o imagine debug doar daca modul debug este activat
         
         if not self.debug_enabled:
             return
             
         try:
-            filepath = f"debug_output/{filename}"
+            debug_dir = os.path.dirname(self.log_file_path)
+            filepath = os.path.join(debug_dir, filename)
             cv2.imwrite(filepath, image)
             self.log(f"Salvez imagine debug: {filename}\n")
         except Exception as e:

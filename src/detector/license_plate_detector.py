@@ -10,17 +10,19 @@ class LicensePlateDetector:
     
     def __init__(self):
         # Initializeaza detectorul cu componentele necesare
+
         self.image_processor = ImageProcessor()
         self.contour_analyzer = ContourAnalyzer()
         self.ocr_engine = OCREngine()
     
     def detect_and_read_license_plate(self, image, edges=None):
-        # Preprocesarea imaginii- obtine marginilre pentru detectie
+        # Preprocesarea imaginii - obtine marginile pentru detectie
+
         if image is None:
             return None, "", None
         
         if edges is None:
-            _, edges = self.image_processor.preprocess_image(image)
+            _ , edges = self.image_processor.preprocess_image(image)
 
         # Gasirea candidatilor pentru placute
         candidate_plates = self.contour_analyzer.find_license_plate_contours(image, edges)
