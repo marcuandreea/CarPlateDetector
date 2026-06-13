@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_service.dart';
+import 'payment_details_screen.dart';
 
 class QRScreen extends StatefulWidget {
   static const routeName = '/qr';
@@ -85,18 +86,32 @@ class _QRScreenState extends State<QRScreen> {
                     children: [
                       const Text('QR activ'),
                       const SizedBox(height: 16),
-                      Image.memory(_qrBytes!, width: 240, height: 240, fit: BoxFit.contain),
+                      Image.memory(_qrBytes!,
+                          width: 240, height: 240, fit: BoxFit.contain),
                       const SizedBox(height: 16),
                       Text(
                         _statusMessage(_parkingStatus),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadQr,
                         child: const Text('Refresh'),
                       ),
+                      if (_parkingStatus == 'waiting_payment' ||
+                          _parkingStatus == 'payment_expired') ...[
+                        const SizedBox(height: 8),
+                        FilledButton.icon(
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            PaymentDetailsScreen.routeName,
+                          ),
+                          icon: const Icon(Icons.credit_card),
+                          label: const Text('Plătește parcarea'),
+                        ),
+                      ],
                     ],
                   )
                 : Column(

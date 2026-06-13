@@ -1,13 +1,19 @@
 from gui.utils import set_dark_titlebar
 import os
 import cv2
-from datetime import datetime
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QRect
 import qrcode
 
-from db import enter_parking, pay_parking, leave_parking, create_database_connection, count_cars_in_parking, fetch_active_subscription_plan_by_plate
+from db import (
+    count_cars_in_parking,
+    enter_parking,
+    fetch_active_subscription_plan_by_plate,
+    get_parking_fee,
+    leave_parking,
+    pay_parking,
+)
 from config import MAX_PARKING_SPACES
 from db.user_service_db import fetch_user_by_plate, update_user_qr_path
 from gui.utils import QRCodeScannerThread, LiveEntryScannerThread
@@ -434,32 +440,17 @@ class UserLogicMixin:
             self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
             return
 
-        # Nu inregistram plata inca, doar calculam
-        conn = create_database_connection()
-        if not conn:
-            self.pay_status_label.show()
-            self.pay_status_label.setObjectName("statusError")
-            self.pay_status_label.setText("  Nu s-a putut conecta la baza de date")
-            self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
-            return
-        
         try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT ora_intrare, ora_platire FROM masini WHERE cod = %s
-           """, (cod,))
-            row = cursor.fetchone()
-            
-            if not row:
+            fee = get_parking_fee(cod=cod)
+            if not fee:
                 self.pay_status_label.show()
                 self.pay_status_label.setObjectName("statusError")
                 self.pay_status_label.setText("  Codul introdus nu exista in sistem")
-                self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
+                self.pay_status_label.setStyle(self.pay_status_label.style())
                 return
-            
-            ora_intrare, ora_platire = row
+
             user_subscription = fetch_active_subscription_plan_by_plate(
-                self._get_plate_for_payment(cursor, cod)
+                fee["license_plate"]
             )
             if user_subscription:
                 self.pay_status_label.show()
@@ -472,68 +463,22 @@ class UserLogicMixin:
                 self.pending_payment_code = None
                 return
 
-            ora_actuala = datetime.now()
-            
-            # Calculam timpul
-            if ora_platire is None:
-                diferenta_secunde = (ora_actuala - ora_intrare).total_seconds()
-            else:
-                diferenta_secunde = (ora_actuala - ora_platire).total_seconds()
-            
-            minute_totale = int(diferenta_secunde / 60)
-            
-            # Obtinem tarifele
-            cursor.execute("""
-                SELECT durata, pret FROM taxe ORDER BY durata ASC
-           """)
-            taxe_rows = cursor.fetchall()
-            
-            if not taxe_rows:
-                self.pay_status_label.show()
-                self.pay_status_label.setObjectName("statusError")
-                self.pay_status_label.setText("  Nu exista tarife configurate in sistem")
-                self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
-                return
-            
-            # Gasim primul tarif care depaseste sau este egal cu durata
-            pret_de_plata = float(taxe_rows[-1][1])
-            for durata_minuta, pret in taxe_rows:
-                if minute_totale <= durata_minuta:
-                    pret_de_plata = float(pret)
-                    break
-            
-            # Afisam informatiile pe interfata
-            self.pay_minutes_label.setText(f" Timp petrecut: {minute_totale} minute")
-            self.pay_amount_label.setText(f" Total de plata: {pret_de_plata:.2f} RON")
+            self.pay_minutes_label.setText(
+                f" Timp petrecut: {fee['parked_minutes']} minute"
+            )
+            self.pay_amount_label.setText(
+                f" Total de plata: {fee['amount']:.2f} RON"
+            )
             self.pay_info_frame.show()
             self.pay_status_label.hide()
-            
-            # Salvam codul pentru confirmare
-            self.pending_payment_code = cod
-            
+
+            self.pending_payment_code = fee["parking_code"]
+
         except Exception as e:
             self.pay_status_label.show()
             self.pay_status_label.setObjectName("statusError")
             self.pay_status_label.setText(f"  Eroare la calcularea platii: {e}")
-            self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-
-    def _get_plate_for_payment(self, cursor, cod):
-        # Obtine numarul de inmatriculare asociat codului pentru a verifica abonamentul
-        cursor.execute(
-            """
-            SELECT numar_inmatriculare
-            FROM masini
-            WHERE cod = %s
-            """,
-            (cod,),
-        )
-        row = cursor.fetchone()
-        return row[0] if row else None
+            self.pay_status_label.setStyle(self.pay_status_label.style())
 
     def handle_confirm_payment(self):  
         # Handler pentru butonul Plata - confirma si inregistreaza plata

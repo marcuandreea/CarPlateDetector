@@ -38,8 +38,8 @@ from routes.health import router as health_router
 from routes.users import router as users_router
 from routes.parking import router as parking_router
 from routes.subscriptions import router as subscriptions_router
-from services.user_service import ensure_users_table_exists
-from db.db import ensure_subscriptions_table_exists
+from db.db import create_tables
+from db.user_service_db import ensure_users_table_exists
 
 # Middleware pentru rate limiting
 app.add_middleware(
@@ -57,4 +57,5 @@ app.include_router(subscriptions_router, dependencies=[Depends(require_api_key)]
 @app.on_event("startup")
 def startup_event():
     ensure_users_table_exists()
-    ensure_subscriptions_table_exists()
+    if not create_tables():
+        raise RuntimeError("Nu s-au putut initializa tabelele aplicatiei")

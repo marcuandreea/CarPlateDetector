@@ -11,11 +11,6 @@ from PyQt5.QtGui import QIcon
 # Adaugam calea catre directorul src pentru a putea importa modulele
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from db import (create_database_connection, create_tables,
-                enter_parking, pay_parking, leave_parking,
-                show_masini, show_taxe, count_cars_in_parking, update_taxa,
-                add_taxa, delete_taxa, delete_masina)
-
 from gui.utils import QRCodeDecoderThread
 
 from gui.admin_logic import AdminMixin

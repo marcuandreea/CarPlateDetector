@@ -45,17 +45,21 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   void _selectPlan(SubscriptionPlan plan, bool hasActiveSubscription) {
     if (hasActiveSubscription) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ai deja un abonament activ. Nu poți achiziționa altul.')),
+        const SnackBar(
+            content:
+                Text('Ai deja un abonament activ. Nu poți achiziționa altul.')),
       );
       return;
     }
-    
-    Navigator.pushNamed(
+
+    Navigator.push(
       context,
-      CardPaymentScreen.routeName,
-      arguments: plan,
+      MaterialPageRoute(
+        builder: (_) => CardPaymentScreen.subscription(plan: plan),
+      ),
     ).then((value) {
       // Re-fetch data when returning from payment screen
+      if (!mounted) return;
       setState(() {
         _dataFuture = _fetchData();
       });
@@ -128,15 +132,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Abonament Activ',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.green.shade800,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Colors.green.shade800,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Text('Plan: ${activeSub.planNume}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('Plan: ${activeSub.planNume}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         Text('Expiră la: ${_formatDate(activeSub.endDate)}'),
                       ],
@@ -146,44 +155,48 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 const SizedBox(height: 24),
                 const Text(
                   'Nu poți achiziționa un alt abonament cât timp ai unul activ.',
-                  style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                      color: Colors.grey, fontStyle: FontStyle.italic),
                 ),
                 const SizedBox(height: 16),
               ],
-              
               if (plans.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Text('Nu există planuri de abonament în baza de date.'),
+                    child:
+                        Text('Nu există planuri de abonament în baza de date.'),
                   ),
                 )
               else
                 ...plans.map((plan) => Card(
-                  elevation: activeSub != null ? 0 : 2,
-                  color: activeSub != null ? Colors.grey.shade200 : null,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: Text(
-                      plan.nume,
-                      style: TextStyle(
-                        color: activeSub != null ? Colors.grey.shade600 : null,
+                      elevation: activeSub != null ? 0 : 2,
+                      color: activeSub != null ? Colors.grey.shade200 : null,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        title: Text(
+                          plan.nume,
+                          style: TextStyle(
+                            color:
+                                activeSub != null ? Colors.grey.shade600 : null,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${plan.price.toStringAsFixed(2)} RON • ${plan.duration} zile',
+                          style: TextStyle(
+                            color:
+                                activeSub != null ? Colors.grey.shade500 : null,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color:
+                              activeSub != null ? Colors.grey.shade400 : null,
+                        ),
+                        onTap: () => _selectPlan(plan, activeSub != null),
                       ),
-                    ),
-                    subtitle: Text(
-                      '${plan.price.toStringAsFixed(2)} RON • ${plan.duration} zile',
-                      style: TextStyle(
-                        color: activeSub != null ? Colors.grey.shade500 : null,
-                      ),
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios, 
-                      size: 16,
-                      color: activeSub != null ? Colors.grey.shade400 : null,
-                    ),
-                    onTap: () => _selectPlan(plan, activeSub != null),
-                  ),
-                )),
+                    )),
             ],
           );
         },

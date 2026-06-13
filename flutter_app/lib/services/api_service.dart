@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/subscription_plan.dart';
 import '../models/active_subscription.dart';
+import '../models/parking_fee.dart';
 
 class ApiService {
   final String baseUrl;
@@ -32,11 +33,11 @@ class ApiService {
     }
   }
 
-
   // Inregistreaza un nou user
   Future<http.Response> register(Map<String, dynamic> payload) async {
     final uri = Uri.parse('$baseUrl/register');
-    final res = await http.post(uri, body: jsonEncode(payload), headers: _jsonHeaders());
+    final res = await http.post(uri,
+        body: jsonEncode(payload), headers: _jsonHeaders());
     return res;
   }
 
@@ -61,7 +62,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/parking-status');
     final response = await http.get(uri, headers: _jsonHeaders(token: token));
     if (response.statusCode != 200) {
-      throw Exception('Failed to load parking status (${response.statusCode})');
+      throw Exception('Status-ul parcarii nu a putut fi incarcat (${response.statusCode})');
     }
 
     final decoded = jsonDecode(response.body);
@@ -71,10 +72,44 @@ class ApiService {
     return 'invalid';
   }
 
+  Future<ParkingFee> getParkingFee(String token) async {
+    final uri = Uri.parse('$baseUrl/parking-fee');
+    final response = await http.get(uri, headers: _jsonHeaders(token: token));
+    if (response.statusCode != 200) {
+      final decoded = jsonDecode(response.body);
+      final detail = decoded is Map<String, dynamic>
+          ? decoded['detail']?.toString()
+          : null;
+      throw Exception(detail ?? 'Nu s-au putut încărca detaliile parcării');
+    }
+
+    return ParkingFee.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<http.Response> payParking(
+    String token,
+    String parkingCode,
+    double expectedAmount,
+  ) async {
+    final uri = Uri.parse('$baseUrl/pay-parking');
+    return http.post(
+      uri,
+      body: jsonEncode({
+        'parking_code': parkingCode,
+        'expected_amount': expectedAmount,
+      }),
+      headers: _jsonHeaders(token: token),
+    );
+  }
+
   // Actualizeaza profilul userului autentificat
-  Future<http.Response> updateProfile(String token, Map<String, dynamic> payload) async {
+  Future<http.Response> updateProfile(
+      String token, Map<String, dynamic> payload) async {
     final uri = Uri.parse('$baseUrl/profile');
-    return http.put(uri, body: jsonEncode(payload), headers: _jsonHeaders(token: token));
+    return http.put(uri,
+        body: jsonEncode(payload), headers: _jsonHeaders(token: token));
   }
 
   // Preia planurile de abonament din baza de date
@@ -82,7 +117,8 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/subscription-plans');
     final response = await http.get(uri, headers: _jsonHeaders());
     if (response.statusCode != 200) {
-      throw Exception('Failed to load subscription plans (${response.statusCode})');
+      throw Exception(
+          'Planurile de abonare nu au putut fi incarcate (${response.statusCode})');
     }
 
     final decoded = jsonDecode(response.body);
@@ -100,7 +136,7 @@ class ApiService {
   Future<ActiveSubscription?> getActiveSubscription(String token) async {
     final uri = Uri.parse('$baseUrl/subscriptions/active');
     final response = await http.get(uri, headers: _jsonHeaders(token: token));
-    
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded != null && decoded is Map<String, dynamic>) {
@@ -111,7 +147,8 @@ class ApiService {
   }
 
   // Activeaza un abonament pentru userul autentificat
-  Future<http.Response> activateSubscription(String token, int subscriptionId) async {
+  Future<http.Response> activateSubscription(
+      String token, int subscriptionId) async {
     final uri = Uri.parse('$baseUrl/subscriptions/activate');
     return http.post(
       uri,
@@ -125,7 +162,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/active-qr');
     final response = await http.get(uri, headers: _jsonHeaders(token: token));
     if (response.statusCode != 200) {
-      throw Exception('Failed to load QR (${response.statusCode})');
+      throw Exception('Codul QR nu a putut fi incarcat (${response.statusCode})');
     }
     return response.bodyBytes;
   }

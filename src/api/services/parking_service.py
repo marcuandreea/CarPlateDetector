@@ -3,7 +3,12 @@ import os
 from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 
-from db.db import get_parking_status_by_plate
+from db.db import (
+    fetch_active_subscription_plan_by_plate,
+    get_parking_fee,
+    get_parking_status_by_plate,
+    pay_parking,
+)
 from db.user_service_db import fetch_user_by_id
 
 
@@ -21,19 +26,102 @@ def get_parking_status(user_id: int):
     return {"status": get_parking_status_by_plate(numar_inmatriculare)}
 
 
+def _get_user_plate(user_id: int) -> str:
+    user_row = fetch_user_by_id(user_id)
+    if not user_row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    numar_inmatriculare = user_row[5]
+    if not numar_inmatriculare:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Niciun utilizator nu a fost gasit cu acest numar de inmatriculare.",
+        )
+    return numar_inmatriculare
+
+
+def get_user_parking_fee(user_id: int):
+    numar_inmatriculare = _get_user_plate(user_id)
+    if fetch_active_subscription_plan_by_plate(numar_inmatriculare):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Abonamentul este activ. Nu este necesara plata parcarii.",
+        )
+
+    parking_status = get_parking_status_by_plate(numar_inmatriculare)
+    if parking_status == "invalid":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Niciun vehicul asociat acestui utilizator nu a fost gasit.",
+        )
+    if parking_status == "paid":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Parcarea este deja platita.",
+        )
+
+    try:
+        fee = get_parking_fee(numar_inmatriculare=numar_inmatriculare)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+
+    if not fee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nu s-a putut calcula taxa de parcare pentru acest vehicul.",
+        )
+
+    return {**fee, "currency": "RON"}
+
+
+def pay_user_parking(
+    user_id: int,
+    parking_code: str,
+    expected_amount: float,
+):
+    fee = get_user_parking_fee(user_id)
+    if fee["parking_code"] != parking_code:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Codul de parcare a fost modificat. Reincarcati pagina pentru a vedea noile detalii de plata.",
+        )
+    if round(fee["amount"], 2) != round(expected_amount, 2):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Taxa de parcare a fost modificata. Reîncarcați pagina pentru a vedea noile detalii de plata.",
+        )
+
+    if not pay_parking(parking_code):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Plata pentru parcare nu a putut fi înregistrata. Va rugam sa încercați din nou mai tarziu.",
+        )
+
+    return {
+        "paid": True,
+        "parking_code": parking_code,
+        "amount": fee["amount"],
+        "currency": "RON",
+        "message": "Plata pentru parcare a fost înregistrata cu succes.",
+    }
+
+
 def get_user_active_qr(user_id: int):
     # Returneaza fisierul QR pentru utilizatorul dat
     row = fetch_user_by_id(user_id)
     if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilizatorul nu a fost gasit.")
     qr_path = row[6]
     if not qr_path:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR-ul nu a fost gasit.")
 
     if not os.path.isabs(qr_path):
         qr_path = os.path.abspath(qr_path)
 
     if not os.path.exists(qr_path):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR file not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fișierul QR nu a fost gasit.")
 
     return FileResponse(qr_path, media_type="image/png", filename=os.path.basename(qr_path))

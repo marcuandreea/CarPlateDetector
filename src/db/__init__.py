@@ -1,9 +1,8 @@
 """Database module for parking management system."""
 from .db import (
-    create_database_connection,
-    create_tables,
     enter_parking,
     pay_parking,
+    get_parking_fee,
     leave_parking,
     update_taxa,
     show_masini,
@@ -13,7 +12,6 @@ from .db import (
     delete_taxa,
     delete_masina,
     fetch_subscription_plans,
-    fetch_subscription_plan_types,
     create_subscription_plan,
     update_subscription_plan,
     delete_subscription_plan,
@@ -22,16 +20,13 @@ from .db import (
     fetch_users_for_admin,
     delete_user_by_id,
     activate_subscription,
-    deactivate_user_subscriptions,
-    create_user_subscription,
     fetch_active_subscription_plan_by_plate,
 )
 
 __all__ = [
-    'create_database_connection',
-    'create_tables',
     'enter_parking',
     'pay_parking',
+    'get_parking_fee',
     'leave_parking',
     'update_taxa',
     'show_masini',
@@ -41,7 +36,6 @@ __all__ = [
     'delete_taxa',
     'delete_masina',
     'fetch_subscription_plans',
-    'fetch_subscription_plan_types',
     'create_subscription_plan',
     'update_subscription_plan',
     'delete_subscription_plan',
@@ -50,7 +44,5 @@ __all__ = [
     'fetch_users_for_admin',
     'delete_user_by_id',
     'activate_subscription',
-    'deactivate_user_subscriptions',
-    'create_user_subscription',
     'fetch_active_subscription_plan_by_plate'
 ]

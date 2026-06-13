@@ -21,6 +21,15 @@ class HomeScreen extends StatelessWidget {
           child: const Text('Subscription'),
         ),
         const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () => Navigator.pushNamed(
+            context,
+            '/payment-details',
+          ),
+          icon: const Icon(Icons.credit_card),
+          label: const Text('Plată parcare'),
+        ),
+        const SizedBox(height: 8),
         ElevatedButton(
           onPressed: () => Navigator.pushNamed(context, '/settings'),
           child: const Text('Settings'),

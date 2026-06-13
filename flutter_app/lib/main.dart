@@ -5,7 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/qr_screen.dart';
 import 'screens/subscription_screen.dart';
-import 'screens/card_payment_screen.dart';
+import 'screens/payment_details_screen.dart';
 
 void main() {
   runApp(const ParkingApp());
@@ -27,7 +27,7 @@ class ParkingApp extends StatelessWidget {
         SettingsScreen.routeName: (_) => const SettingsScreen(),
         QRScreen.routeName: (_) => const QRScreen(),
         SubscriptionScreen.routeName: (_) => const SubscriptionScreen(),
-        CardPaymentScreen.routeName: (_) => const CardPaymentScreen(),
+        PaymentDetailsScreen.routeName: (_) => const PaymentDetailsScreen(),
       },
     );
   }
