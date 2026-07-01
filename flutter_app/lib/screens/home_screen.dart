@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Parcare privată'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

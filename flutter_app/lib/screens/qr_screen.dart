@@ -35,7 +35,7 @@ class _QRScreenState extends State<QRScreen> {
 
       if (token == null || token.isEmpty) {
         setState(() {
-          _errorMessage = 'Please login again';
+          _errorMessage = 'Autentificăți-vă din nou';
           _loading = false;
         });
         return;

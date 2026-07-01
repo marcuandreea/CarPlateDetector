@@ -26,10 +26,10 @@ def _build_profile_payload(row):
 def register_user(payload):
     # Inregistreaza un nou user, verificand unicitatea email-ului si numarului de inmatriculare
     if fetch_user_by_email(payload.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email existent")
 
     if fetch_user_by_plate(payload.numar_inmatriculare):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Numar inmatriculare already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Numarul de inmatriculare existent")
 
     # Cripteaza parola folosind functia de criptare
     password_hash = hash_password(payload.password)

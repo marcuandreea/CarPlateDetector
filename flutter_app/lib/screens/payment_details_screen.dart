@@ -96,7 +96,7 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                     const Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: Color(0xFFEF4444),
+                      color: Color.fromARGB(255, 223, 223, 15),
                     ),
                     const SizedBox(height: 16),
                     Text(

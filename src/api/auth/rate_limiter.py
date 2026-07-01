@@ -33,7 +33,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if len(queue) >= self.requests_per_window:
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests. Please try again later."},
+                content={"detail": "Prea multe cereri. Încearcă din nou mai târziu."},
             )
 
         # Adauga cererea curenta in coada

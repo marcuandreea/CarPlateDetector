@@ -20,12 +20,12 @@ router = APIRouter(tags=["parking"])
 def parking_status(current_user_id: int = Depends(get_current_user_id)):
     return get_parking_status(current_user_id)
 
-
+# Endpoint pentru obtinerea taxei de parcare a utilizatorului curent
 @router.get("/parking-fee", response_model=ParkingFeeResponse)
 def parking_fee(current_user_id: int = Depends(get_current_user_id)):
     return get_user_parking_fee(current_user_id)
 
-
+# Endpoint pentru plata parcarii
 @router.post("/pay-parking", response_model=ParkingPaymentResponse)
 def pay_parking(
     payload: ParkingPaymentRequest,
@@ -36,7 +36,6 @@ def pay_parking(
         payload.parking_code,
         payload.expected_amount,
     )
-
 
 # Endpoint pentru obtinerea QR-ului activ al utilizatorului curent
 @router.get("/active-qr")

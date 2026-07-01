@@ -29,15 +29,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _token;
 
   String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Email is required';
+    if (value == null || value.isEmpty) return 'Email-ul este obligatoriu';
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+');
-    if (!emailRegex.hasMatch(value)) return 'Invalid email';
+    if (!emailRegex.hasMatch(value)) return 'Email invalid';
     return null;
   }
 
   String? _validateOptionalPassword(String? value) {
     if (value != null && value.isNotEmpty && value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return 'Parola trebuie să aibă cel puțin 6 caractere';
     }
     return null;
   }
@@ -45,13 +45,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _validateConfirmPassword(String? value) {
     final password = _passwordController.text.trim();
     if (password.isEmpty) return null;
-    if (value == null || value.isEmpty) return 'Confirm password is required';
-    if (value != password) return 'Passwords do not match';
+    if (value == null || value.isEmpty) return 'Parola de confirmare este obligatorie';
+    if (value != password) return 'Parolele nu se potrivesc';
     return null;
   }
 
   String? _validateRequired(String? value, String field) {
-    if (value == null || value.isEmpty) return '$field is required';
+    if (value == null || value.isEmpty) return '$field este obligatoriu';
     return null;
   }
 
@@ -72,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _loading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please login again')),
+          const SnackBar(content: Text('Autentificăți-vă din nou')),
         );
         return;
       }
@@ -89,13 +89,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _plateController.text = body['numar_inmatriculare']?.toString() ?? '';
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load profile (${response.statusCode})')),
+          SnackBar(content: Text('Profilul nu a putut fi încarcat (${response.statusCode})')),
         );
       }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Load error: $error')),
+        SnackBar(content: Text('Eroare la încărcarea profilului: $error')),
       );
     } finally {
       if (mounted) {
@@ -110,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_token == null || _token!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing authentication token')),
+        const SnackBar(content: Text('Token de autentificare lipsă')),
       );
       return;
     }
@@ -132,11 +132,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+          const SnackBar(content: Text('Profilul a fost actualizat cu succes')),
         );
         _passwordController.clear();
       } else {
-        String message = 'Failed to update profile';
+        String message = 'Nu s-a putut actualiza profilul';
         try {
           final body = jsonDecode(response.body);
           if (body is Map<String, dynamic> && body['detail'] != null) {
@@ -150,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save error: $error')),
+        SnackBar(content: Text('Eroare la salvarea profilului: $error')),
       );
     } finally {
       if (mounted) {

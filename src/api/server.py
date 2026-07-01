@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(
     title="Parking Management API",
     version="1.0.0",
-    description="FastAPI backend pentru aplicatia de parcare",
+    description="FastAPI Sistem de gestionare al parcarilor private",
 )
 
 # Middleware pentru CORS

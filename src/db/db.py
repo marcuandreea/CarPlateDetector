@@ -96,10 +96,6 @@ def create_tables():
             """
         )
 
-        # Tabelele abonamente noi
-        cursor.execute(CREATE_SUBSCRIPTIONS_TABLE_SQL)
-        cursor.execute(CREATE_USER_SUBSCRIPTIONS_TABLE_SQL)
-
         conn.commit()
         debug_manager.log("Tabelele au fost create cu succes!")
         return True

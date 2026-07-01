@@ -85,7 +85,7 @@ class UserLogicMixin:
 
     def _show_unreadable_plate_message(self):
         # Afiseaza mesaj de eroare cand textul detectat nu este lizibil
-        self.result_label.setText("  TEXT NOT READABLE")
+        self.result_label.setText("  TEXTUL NU ESTE LIZIBIL")
         self.result_label.setObjectName("statusErrorReadable")
         self.enter_action_frame.hide()
         self.result_panel.setVisible(True)
@@ -109,6 +109,7 @@ class UserLogicMixin:
 
         qr_img = qr.make_image(fill_color="black", back_color="white")
 
+        # Determina daca textul detectat apartine unui utilizator inregistrat sau unui vizitator
         user_row = fetch_user_by_plate(detected_text)
         qr_subfolder = "users" if user_row else "visitors"
         qr_folder = os.path.join(os.path.dirname(__file__), '..', '..', 'qrcodes', qr_subfolder)
@@ -143,6 +144,7 @@ class UserLogicMixin:
         if hasattr(self, "entry_scanner_thread") and self.entry_scanner_thread and self.entry_scanner_thread.isRunning():
             return
 
+        # Opreste orice scanner live activ inainte de a porni unul nou
         self.stop_entry_live_scanner()
 
         self.set_entry_source_buttons("live")
@@ -150,6 +152,7 @@ class UserLogicMixin:
         self.image_display.show()
         self.result_panel.setVisible(False)
 
+        # Porneste scanarea live
         enable_debug = self.debug_checkbox.isChecked()
         self.entry_scanner_thread = LiveEntryScannerThread(enable_debug=enable_debug)
         self.entry_scanner_thread.frame_ready.connect(self.on_entry_frame_ready)
@@ -185,11 +188,13 @@ class UserLogicMixin:
         if hasattr(self, "entry_scanner_thread") and self.entry_scanner_thread and self.entry_scanner_thread.isRunning():
             return
 
+        # Opreste orice scanner live activ inainte de a porni scanarea video
         self.stop_entry_live_scanner()
 
         self.image_display.show()
         self.result_panel.setVisible(False)
 
+        # Porneste scanarea video
         enable_debug = self.debug_checkbox.isChecked()
         self.entry_scanner_thread = LiveEntryScannerThread(enable_debug=enable_debug, video_path=video_path)
         self.entry_scanner_thread.frame_ready.connect(self.on_entry_frame_ready)
