@@ -264,6 +264,41 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
 }
 
 /*  Tabel rezultate admin  */
+QTabWidget::pane {
+    border: none;
+    background: transparent;
+    margin-top: 10px;
+}
+
+QTabBar {
+    alignment: center;
+}
+
+QTabBar::tab {
+    background-color: #2d2d2d;
+    color: #b0b0b0;
+    border: 1px solid #3d3d3d;
+    border-radius: 6px;
+    padding: 8px 24.4px;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 100px;
+    margin: 0 4px 10px 4px;
+}
+
+QTabBar::tab:hover {
+    background-color: #353535;
+    border-color: #d946a6;
+    color: #ffffff;
+}
+
+QTabBar::tab:selected {
+    background-color: #d946a6;
+    color: #ffffff;
+    border: 1px solid #c23594;
+    font-weight: 600;
+}
+
 QTableWidget#adminResults {
     background-color: #1a1a1a;
     alternate-background-color: #252525;
@@ -365,6 +400,15 @@ QLabel#carCountLabel {
     font-weight: bold;
     color: #d946a6;
     padding: 10px;
+}
+
+/* Eticheta locuri disponibile */
+QLabel#availableSpotsLabel {
+    font-size: 15px;
+    font-weight: bold;
+    color: #d946a6;
+    border-radius: 6px;
+    padding: 8px 15px;
 }
 
 /* Actiuni rapide / butoane mici in tabele */

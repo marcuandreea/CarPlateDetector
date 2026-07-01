@@ -77,6 +77,7 @@ class UserLogicMixin:
 
         self._save_detected_plate_qr(detected_text, cod)
         self.result_label.setText(f"  {detected_text}    |    QR Cod generat")
+        self.enter_action_frame.hide()
         self.result_panel.setVisible(True)
 
         # Porneste timer-ul pentru resetare dupa 10 secunde
@@ -86,11 +87,13 @@ class UserLogicMixin:
         # Afiseaza mesaj de eroare cand textul detectat nu este lizibil
         self.result_label.setText("  TEXT NOT READABLE")
         self.result_label.setObjectName("statusErrorReadable")
+        self.enter_action_frame.hide()
         self.result_panel.setVisible(True)
 
     def _show_qr_generation_error(self, detected_text):
         # Afiseaza mesaj de eroare cand nu se poate genera codul QR pentru textul detectat
         self.result_label.setText(f"  {detected_text}    |    Eroare generare")
+        self.enter_action_frame.hide()
         self.result_panel.setVisible(True)
 
     def _save_detected_plate_qr(self, detected_text, cod):

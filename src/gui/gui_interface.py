@@ -83,7 +83,7 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         content_area = QFrame()
         content_area.setObjectName("contentArea")
         content_layout = QVBoxLayout(content_area)
-        content_layout.setContentsMargins(30, 10, 30, 30)
+        content_layout.setContentsMargins(30, 10, 30, 0)
         content_layout.setSpacing(0)
         
         self.panels_container = QWidget()
@@ -200,7 +200,7 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         self.result_panel = QFrame()
         self.result_panel.setStyleSheet("background: transparent;")
         result_layout = QHBoxLayout(self.result_panel)
-        result_layout.setContentsMargins(0, 10, 0, 0)
+        result_layout.setContentsMargins(0, 165, 0, 0)
         result_layout.addStretch()
 
         self.result_label = QLabel("")
@@ -209,8 +209,10 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
 
         result_layout.addStretch()
         self.result_panel.setVisible(False)
+        
         enter_layout.addWidget(self.result_panel)
         
+        # Stretch-ul la final pastreaza tot continutul de deasupra strans spre partea de sus
         enter_layout.addStretch()
         
         action_content_layout.addWidget(self.enter_content)
@@ -396,21 +398,21 @@ class ParkingManagementGUI(QMainWindow, AdminMixin, UserLogicMixin):
         subscriptions_layout = QVBoxLayout(subscriptions_tab)
         subscriptions_layout.setContentsMargins(0, 0, 0, 0)
         subscriptions_layout.addWidget(self.admin_subscriptions_table)
-        self.admin_tabs.addTab(subscriptions_tab, "Abonamente")
+        self.admin_tabs.addTab(subscriptions_tab, "Tip subscriptii")
 
         self.admin_user_subscriptions_table = build_admin_table()
         user_subscriptions_tab = QWidget()
         user_subscriptions_layout = QVBoxLayout(user_subscriptions_tab)
         user_subscriptions_layout.setContentsMargins(0, 0, 0, 0)
         user_subscriptions_layout.addWidget(self.admin_user_subscriptions_table)
-        self.admin_tabs.addTab(user_subscriptions_tab, "Abonamente Useri")
+        self.admin_tabs.addTab(user_subscriptions_tab, "Abonamente")
 
         self.admin_users_table = build_admin_table()
         users_tab = QWidget()
         users_layout = QVBoxLayout(users_tab)
         users_layout.setContentsMargins(0, 0, 0, 0)
         users_layout.addWidget(self.admin_users_table)
-        self.admin_tabs.addTab(users_tab, "Users")
+        self.admin_tabs.addTab(users_tab, "Useri")
 
         admin_layout.addWidget(self.admin_tabs)
 

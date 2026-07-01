@@ -93,42 +93,111 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(controller: _numeC, decoration: const InputDecoration(labelText: 'Nume'), validator: (v) => _validateRequired(v, 'Nume')),
-              const SizedBox(height: 8),
-              TextFormField(controller: _prenumeC, decoration: const InputDecoration(labelText: 'Prenume'), validator: (v) => _validateRequired(v, 'Prenume')),
-              const SizedBox(height: 8),
-              TextFormField(controller: _emailC, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress, validator: _validateEmail),
-              const SizedBox(height: 8),
-              TextFormField(controller: _passwordC, decoration: const InputDecoration(labelText: 'Parolă'), obscureText: true, validator: _validatePassword),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _confirmPasswordC,
-                decoration: const InputDecoration(labelText: 'Confirmă parola'),
-                obscureText: true,
-                validator: _validateConfirmPassword,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _plateC,
-                decoration: const InputDecoration(labelText: 'Număr înmatriculare'),
-                textCapitalization: TextCapitalization.characters,
-                inputFormatters: [UpperCaseTextFormatter()],
-                validator: (v) => _validateRequired(v, 'Număr înmatriculare'),
-              ),
-              const SizedBox(height: 16),
-              _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(onPressed: _submit, child: const Text('Register')),
-              const SizedBox(height: 8),
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Back to Login')),
-            ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Creează cont',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Completează datele de mai jos',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _numeC,
+                        decoration: const InputDecoration(labelText: 'Nume'),
+                        validator: (v) => _validateRequired(v, 'Nume'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _prenumeC,
+                        decoration: const InputDecoration(labelText: 'Prenume'),
+                        validator: (v) => _validateRequired(v, 'Prenume'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailC,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: _validateEmail,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordC,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Parolă',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: _validatePassword,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordC,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirmă parola',
+                    prefixIcon: Icon(Icons.lock_reset_outlined),
+                  ),
+                  validator: _validateConfirmPassword,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _plateC,
+                  decoration: const InputDecoration(
+                    labelText: 'Număr înmatriculare',
+                    prefixIcon: Icon(Icons.directions_car_outlined),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [UpperCaseTextFormatter()],
+                  validator: (v) => _validateRequired(v, 'Număr înmatriculare'),
+                ),
+                const SizedBox(height: 48),
+                SizedBox(
+                  height: 56,
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : FilledButton(
+                          onPressed: _submit,
+                          child: const Text('Înregistrare', style: TextStyle(fontSize: 18)),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

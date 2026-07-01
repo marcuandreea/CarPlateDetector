@@ -173,69 +173,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('Setări Cont')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
-                child: ListView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextFormField(
-                      controller: _numeController,
-                      decoration: const InputDecoration(labelText: 'Nume', border: OutlineInputBorder()),
-                      validator: (value) => _validateRequired(value, 'Nume'),
+                    const Icon(
+                      Icons.account_circle_rounded,
+                      size: 80,
+                      color: Color(0xFF2563EB),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _prenumeController,
-                      decoration: const InputDecoration(labelText: 'Prenume', border: OutlineInputBorder()),
-                      validator: (value) => _validateRequired(value, 'Prenume'),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Editează profilul',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _numeController,
+                            decoration: const InputDecoration(labelText: 'Nume'),
+                            validator: (value) => _validateRequired(value, 'Nume'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _prenumeController,
+                            decoration: const InputDecoration(labelText: 'Prenume'),
+                            validator: (value) => _validateRequired(value, 'Prenume'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
                       validator: _validateEmail,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Parolă (opțional)', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Parolă (opțional)',
+                        prefixIcon: Icon(Icons.lock_outline),
+                      ),
                       validator: _validateOptionalPassword,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Confirmă parola', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmă parola',
+                        prefixIcon: Icon(Icons.lock_reset_outlined),
+                      ),
                       validator: _validateConfirmPassword,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _plateController,
-                      decoration: const InputDecoration(labelText: 'Număr înmatriculare', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Număr înmatriculare',
+                        prefixIcon: Icon(Icons.directions_car_outlined),
+                      ),
                       textCapitalization: TextCapitalization.characters,
                       inputFormatters: [UpperCaseTextFormatter()],
                       validator: (value) => _validateRequired(value, 'Număr înmatriculare'),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 48),
                     SizedBox(
-                      height: 48,
+                      height: 56,
                       child: _saving
                           ? const Center(child: CircularProgressIndicator())
-                          : ElevatedButton(
+                          : FilledButton(
                               onPressed: _saveProfile,
-                              child: const Text('Save changes'),
+                              child: const Text('Salvează modificările', style: TextStyle(fontSize: 18)),
                             ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Back'),
                     ),
                   ],
                 ),

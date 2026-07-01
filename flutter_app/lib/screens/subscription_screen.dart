@@ -58,7 +58,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         builder: (_) => CardPaymentScreen.subscription(plan: plan),
       ),
     ).then((value) {
-      // Re-fetch data when returning from payment screen
       if (!mounted) return;
       setState(() {
         _dataFuture = _fetchData();
@@ -88,20 +87,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
           if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Eroare la încărcarea abonamentelor: ${snapshot.error}'),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _dataFuture = _fetchData();
-                      });
-                    },
-                    child: const Text('Reîncearcă'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Color(0xFFEF4444)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Eroare la încărcare:\n${snapshot.error}'.replaceFirst('Exception: ', ''),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Color(0xFF1E293B)),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _dataFuture = _fetchData();
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reîncearcă'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -115,86 +124,170 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           final activeSub = data.activeSubscription;
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             children: [
               if (activeSub != null) ...[
-                Card(
-                  color: Colors.green.shade50,
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Abonament Activ',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color: Colors.green.shade800,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text('Plan: ${activeSub.planNume}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text('Expiră la: ${_formatDate(activeSub.endDate)}'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 const Text(
-                  'Nu poți achiziționa un alt abonament cât timp ai unul activ.',
-                  style: TextStyle(
-                      color: Colors.grey, fontStyle: FontStyle.italic),
+                  'Abonamentul tău',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                 ),
                 const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_circle, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Activ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        activeSub.planNume,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Expiră la: ${_formatDate(activeSub.endDate)}',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Planuri disponibile',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Nu poți achiziționa un alt abonament cât timp ai unul activ.',
+                  style: TextStyle(color: Color(0xFF64748B), fontStyle: FontStyle.italic),
+                ),
+                const SizedBox(height: 16),
+              ] else ...[
+                const Text(
+                  'Alege un plan',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Selectează abonamentul potrivit pentru tine.',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+                ),
+                const SizedBox(height: 24),
               ],
               if (plans.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child:
-                        Text('Nu există planuri de abonament în baza de date.'),
+                    child: Text('Nu există planuri de abonament disponibile.'),
                   ),
                 )
               else
                 ...plans.map((plan) => Card(
                       elevation: activeSub != null ? 0 : 2,
-                      color: activeSub != null ? Colors.grey.shade200 : null,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        title: Text(
-                          plan.nume,
-                          style: TextStyle(
-                            color:
-                                activeSub != null ? Colors.grey.shade600 : null,
-                          ),
+                      color: activeSub != null ? const Color(0xFFF1F5F9) : Colors.white,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: activeSub != null ? Colors.transparent : const Color(0xFFE2E8F0),
                         ),
-                        subtitle: Text(
-                          '${plan.price.toStringAsFixed(2)} RON • ${plan.duration} zile',
-                          style: TextStyle(
-                            color:
-                                activeSub != null ? Colors.grey.shade500 : null,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color:
-                              activeSub != null ? Colors.grey.shade400 : null,
-                        ),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
                         onTap: () => _selectPlan(plan, activeSub != null),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: activeSub != null
+                                      ? const Color(0xFFE2E8F0)
+                                      : const Color(0xFFEFF6FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.star_rounded,
+                                  color: activeSub != null ? const Color(0xFF94A3B8) : const Color(0xFF2563EB),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      plan.nume,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: activeSub != null ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Valabilitate: ${plan.duration} zile',
+                                      style: TextStyle(
+                                        color: activeSub != null ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${plan.price.toStringAsFixed(0)} RON',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: activeSub != null ? const Color(0xFF94A3B8) : const Color(0xFF10B981),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     )),
             ],

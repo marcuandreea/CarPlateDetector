@@ -70,7 +70,7 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalii parcare'),
+        title: const Text('Detalii Plată Parcare'),
         actions: [
           IconButton(
             onPressed: _refresh,
@@ -95,18 +95,22 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                   children: [
                     const Icon(
                       Icons.error_outline,
-                      size: 44,
-                      color: Colors.red,
+                      size: 64,
+                      color: Color(0xFFEF4444),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       snapshot.error.toString().replaceFirst(
                             'Exception: ',
                             '',
                           ),
                       textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     FilledButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(Icons.refresh),
@@ -120,38 +124,87 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
 
           final fee = snapshot.data!;
           return SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.local_parking,
-                    size: 52,
-                    color: Colors.blue,
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.local_parking_rounded,
+                              size: 48,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          const Text(
+                            'Timp de parcare',
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _durationText(fee.parkedMinutes),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          const Divider(color: Color(0xFFE2E8F0)),
+                          const SizedBox(height: 32),
+                          const Text(
+                            'Total de plată',
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${fee.amount.toStringAsFixed(2)} ${fee.currency}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Ai stat: ${_durationText(fee.parkedMinutes)}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Total de plată: '
-                    '${fee.amount.toStringAsFixed(2)} ${fee.currency}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const Spacer(),
+                  const SizedBox(height: 48),
                   SizedBox(
-                    height: 50,
+                    height: 56,
                     child: FilledButton.icon(
                       onPressed: () => _openCardPayment(fee),
                       icon: const Icon(Icons.credit_card),
-                      label: const Text('Plătește acum'),
+                      label: const Text('Plătește acum', style: TextStyle(fontSize: 18)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],

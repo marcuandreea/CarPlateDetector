@@ -64,67 +64,135 @@ class _QRScreenState extends State<QRScreen> {
   String _statusMessage(String? status) {
     switch (status) {
       case 'paid':
-        return 'Folosiți acest cod pentru a ieși din parcare';
+        return 'Folosește acest cod pentru a ieși din parcare';
       case 'waiting_payment':
       case 'payment_expired':
-        return 'Folosiți acest cod pentru a plăti';
+        return 'Folosește acest cod pentru a plăti la terminal';
       default:
-        return 'QR not available';
+        return 'QR Code invalid sau expirat';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('QR')),
+      appBar: AppBar(title: const Text('Cod QR Parcare')),
       body: Center(
-        child: _loading
-            ? const CircularProgressIndicator()
-            : _qrBytes != null
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('QR activ'),
-                      const SizedBox(height: 16),
-                      Image.memory(_qrBytes!,
-                          width: 240, height: 240, fit: BoxFit.contain),
-                      const SizedBox(height: 16),
-                      Text(
-                        _statusMessage(_parkingStatus),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadQr,
-                        child: const Text('Refresh'),
-                      ),
-                      if (_parkingStatus == 'waiting_payment' ||
-                          _parkingStatus == 'payment_expired') ...[
-                        const SizedBox(height: 8),
-                        FilledButton.icon(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            PaymentDetailsScreen.routeName,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: _loading
+              ? const CircularProgressIndicator()
+              : _qrBytes != null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Scanează la barieră',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
                           ),
-                          icon: const Icon(Icons.credit_card),
-                          label: const Text('Plătește parcarea'),
+                        ),
+                        const SizedBox(height: 24),
+                        Card(
+                          elevation: 4,
+                          shadowColor: const Color(0xFF94A3B8).withOpacity(0.3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  padding: const EdgeInsets.all(16),
+                                  child: Image.memory(
+                                    _qrBytes!,
+                                    width: 200,
+                                    height: 200,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  _statusMessage(_parkingStatus),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF475569),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: _loadQr,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reîncarcă'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                foregroundColor: const Color(0xFF1E293B),
+                                elevation: 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_parkingStatus == 'waiting_payment' ||
+                            _parkingStatus == 'payment_expired') ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: FilledButton.icon(
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                PaymentDetailsScreen.routeName,
+                              ),
+                              icon: const Icon(Icons.credit_card),
+                              label: const Text('Plătește online', style: TextStyle(fontSize: 18)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          size: 64,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage ?? 'Codul QR nu este disponibil',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 16),
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed: _loadQr,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reîncearcă'),
                         ),
                       ],
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_errorMessage ?? 'QR not available'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadQr,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                    ),
+        ),
       ),
     );
   }
