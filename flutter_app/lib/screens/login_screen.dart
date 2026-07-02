@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home_screen.dart';
 import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -81,6 +82,26 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _loading = false);
       }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _redirectIfAuthenticated();
+  }
+
+  Future<void> _redirectIfAuthenticated() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        HomeScreen.routeName,
+        (route) => false,
+      );
     }
   }
 

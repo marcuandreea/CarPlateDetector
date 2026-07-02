@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
+import '../models/active_subscription.dart';
 import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +19,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
   bool _isInParking = false;
+  bool _hasActiveSubscription = false;
+  String? _parkingStatus;
+  int? _graceSecondsRemaining;
+  Timer? _graceTimer;
 
   @override
   void initState() {
@@ -34,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void dispose() {
+    _graceTimer?.cancel();
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -49,10 +57,46 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
       if (token != null && token.isNotEmpty) {
-        final status = await _apiService.getParkingStatus(token);
+        final results = await Future.wait([
+          _apiService.getParkingStatusDetails(token),
+          _apiService.getActiveSubscription(token),
+        ]);
+        final statusDetails = results[0] as Map<String, dynamic>;
+        final activeSubscription = results[1] as ActiveSubscription?;
+        final status = statusDetails['status']?.toString() ?? 'invalid';
+        final graceSeconds = (statusDetails['grace_seconds_remaining'] as num?)?.toInt();
+
+        _graceTimer?.cancel();
+        if (status == 'paid' && activeSubscription == null && graceSeconds != null && graceSeconds > 0) {
+          _graceSecondsRemaining = graceSeconds;
+          _graceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            if (!mounted) {
+              timer.cancel();
+              return;
+            }
+
+            final current = _graceSecondsRemaining ?? 0;
+            if (current <= 1) {
+              setState(() {
+                _graceSecondsRemaining = 0;
+              });
+              timer.cancel();
+              return;
+            }
+
+            setState(() {
+              _graceSecondsRemaining = current - 1;
+            });
+          });
+        } else {
+          _graceSecondsRemaining = null;
+        }
+
         if (mounted) {
           setState(() {
             _isInParking = status != 'invalid';
+            _parkingStatus = status;
+            _hasActiveSubscription = activeSubscription != null;
             _isLoading = false;
           });
         }
@@ -64,12 +108,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         }
       }
     } catch (e) {
+      _graceTimer?.cancel();
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
     }
+  }
+
+  String _formatGraceTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -175,12 +226,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                             child: const Icon(Icons.directions_car, color: Colors.white, size: 32),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Status',
+                                  _hasActiveSubscription ? 'Status abonament' : 'Status parcare',
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
@@ -189,13 +240,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  'În Parcare',
+                                  _hasActiveSubscription ? 'Abonament activ' : 'În Parcare',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                if (_parkingStatus == 'paid' && !_hasActiveSubscription && (_graceSecondsRemaining ?? 0) > 0) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Mai aveți ${_formatGraceTime(_graceSecondsRemaining!)} să părăsiți parcarea',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

@@ -3,6 +3,13 @@ from contextlib import contextmanager
 
 import psycopg2
 
+try:
+    from config import load_env_file
+except ModuleNotFoundError:
+    from src.config import load_env_file
+
+load_env_file()
+
 # Citeste setarile de conexiune la baza de date
 DB_CONFIG = {
     "database": os.getenv("PARKING_DB_NAME", "parkingDB"),

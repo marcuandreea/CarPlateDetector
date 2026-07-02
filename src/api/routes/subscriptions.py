@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from auth.dependencies import get_current_user_id
-from db.db import activate_subscription, fetch_subscription_plans, fetch_active_subscription_by_user_id
+from db import activate_subscription, fetch_subscription_plans, fetch_active_subscription_by_user_id
 from models.subscription import SubscriptionActivateRequest
 
 router = APIRouter(tags=["subscriptions"])

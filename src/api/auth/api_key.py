@@ -4,15 +4,24 @@ import secrets
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
+try:
+    from config import load_env_file
+except ModuleNotFoundError:
+    from src.config import load_env_file
 
-API_KEY_ENV_VAR = "PARKING_API_KEYS"
+load_env_file()
+
+API_KEY_ENV_VARS = ("PARKING_API_KEYS", "PARKING_API_KEY")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def _get_configured_api_keys() -> tuple[str, ...]:
     # Returnează cheile API configurate din variabila de mediu
-    raw_keys = os.getenv(API_KEY_ENV_VAR, "")
-    return tuple(key.strip() for key in raw_keys.split(",") if key.strip())
+    keys: list[str] = []
+    for env_var in API_KEY_ENV_VARS:
+        raw_keys = os.getenv(env_var, "")
+        keys.extend(key.strip() for key in raw_keys.split(",") if key.strip())
+    return tuple(dict.fromkeys(keys))
 
 
 def require_api_key(api_key: str | None = Security(api_key_header)) -> str:
@@ -21,7 +30,7 @@ def require_api_key(api_key: str | None = Security(api_key_header)) -> str:
     if not configured_keys:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Cheile API nu sunt configure. Setează {API_KEY_ENV_VAR}.",
+            detail=f"Cheile API nu sunt configure. Setează {', '.join(API_KEY_ENV_VARS)}.",
         )
 
     if api_key is None or not any(

@@ -1,15 +1,16 @@
 import os
+from datetime import datetime
 
 from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 
-from db.db import (
+from db import (
     fetch_active_subscription_plan_by_plate,
     get_parking_fee,
     get_parking_status_by_plate,
     pay_parking,
 )
-from db.user_service_db import fetch_user_by_id
+from src.db.users import fetch_user_by_id
 
 
 def get_parking_status(user_id: int):
@@ -21,9 +22,24 @@ def get_parking_status(user_id: int):
     # Se presupune ca numarul de inmatriculare se afla pe pozitia 5 in row-ul returnat de fetch_user_by_id
     numar_inmatriculare = user_row[5]
     if not numar_inmatriculare:
-        return {"status": "invalid"}
+        return {"status": "invalid", "grace_seconds_remaining": None}
 
-    return {"status": get_parking_status_by_plate(numar_inmatriculare)}
+    parking_status = get_parking_status_by_plate(numar_inmatriculare)
+    # Daca parcarea este platita, calculam timpul ramas din perioada de gratie de 5 minute
+    grace_seconds_remaining = None
+    if parking_status == "paid":
+        try:
+            cursor_data = get_parking_fee(numar_inmatriculare=numar_inmatriculare)
+            if cursor_data:
+                remaining = max(0, int(5 * 60 - cursor_data["billable_minutes"] * 60))
+                grace_seconds_remaining = remaining
+        except Exception:
+            grace_seconds_remaining = None
+
+    return {
+        "status": parking_status,
+        "grace_seconds_remaining": grace_seconds_remaining,
+    }
 
 
 def _get_user_plate(user_id: int) -> str:

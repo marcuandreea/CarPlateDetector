@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from detector.debug_manager import debug_manager
+from .core import create_database_connection, _remove_qr_file
 
-from .db import create_database_connection
 
 # SQL-urile pentru operatiile pe tabela users
 CREATE_USERS_TABLE_SQL = """
@@ -176,6 +176,63 @@ def update_user(user_id: int, values: dict[str, Any]) -> None:
             cursor.close()
         connection.close()
 
+
 def update_user_qr_path(user_id: int, qr_path: str) -> None:
     # Actualizeaza calea QR-ului pentru userul specificat
     update_user(user_id, {"qr_path": qr_path})
+
+
+def fetch_users_for_admin() -> list[tuple]:
+    # Returneaza utilizatorii pentru admin
+    conn = create_database_connection()
+    if not conn:
+        return []
+
+    cursor = None
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, nume, prenume, email, numar_inmatriculare
+            FROM users
+            ORDER BY id
+            """
+        )
+        return cursor.fetchall()
+    except Exception as exc:
+        debug_manager.log(f"Eroare la citirea userilor pentru admin: {exc}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        conn.close()
+
+
+def delete_user_by_id(user_id: int) -> bool:
+    # Sterge un user si fisierul QR asociat
+    conn = create_database_connection()
+    if not conn:
+        return False
+
+    cursor = None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT numar_inmatriculare FROM users WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        if cursor.rowcount > 0 and row and row[0]:
+            try:
+                _remove_qr_file(row[0])
+            except Exception as cleanup_error:
+                debug_manager.log(f"Eroare la stergerea QR: {cleanup_error}")
+            return True
+        return False
+    except Exception as exc:
+        conn.rollback()
+        debug_manager.log(f"Eroare la stergerea userului: {exc}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        conn.close()

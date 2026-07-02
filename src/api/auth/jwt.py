@@ -4,6 +4,13 @@ from typing import Any, Dict
 
 from jose import jwt, JWTError
 
+try:
+    from config import load_env_file
+except ModuleNotFoundError:
+    from src.config import load_env_file
+
+load_env_file()
+
 SECRET_KEY = os.getenv("PARKING_API_SECRET", "change-me-in-production")
 ALGORITHM = os.getenv("PARKING_API_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("PARKING_API_TOKEN_EXPIRE_MINUTES", "60"))

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/auth_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
@@ -102,13 +103,13 @@ class ParkingApp extends StatelessWidget {
       ),
       initialRoute: LoginScreen.routeName,
       routes: {
-        LoginScreen.routeName: (_) => const LoginScreen(),
+        LoginScreen.routeName: (_) => const GuestGate(child: LoginScreen()),
         RegisterScreen.routeName: (_) => const RegisterScreen(),
-        HomeScreen.routeName: (_) => const HomeScreen(),
-        SettingsScreen.routeName: (_) => const SettingsScreen(),
-        QRScreen.routeName: (_) => const QRScreen(),
-        SubscriptionScreen.routeName: (_) => const SubscriptionScreen(),
-        PaymentDetailsScreen.routeName: (_) => const PaymentDetailsScreen(),
+        HomeScreen.routeName: (_) => const AuthGate(child: HomeScreen()),
+        SettingsScreen.routeName: (_) => const AuthGate(child: SettingsScreen()),
+        QRScreen.routeName: (_) => const AuthGate(child: QRScreen()),
+        SubscriptionScreen.routeName: (_) => const AuthGate(child: SubscriptionScreen()),
+        PaymentDetailsScreen.routeName: (_) => const AuthGate(child: PaymentDetailsScreen()),
       },
     );
   }

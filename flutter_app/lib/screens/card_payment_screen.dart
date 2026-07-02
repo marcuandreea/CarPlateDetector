@@ -230,7 +230,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(19),
+                  LengthLimitingTextInputFormatter(16),
                   CardNumberTextFormatter(),
                 ],
                 decoration: const InputDecoration(

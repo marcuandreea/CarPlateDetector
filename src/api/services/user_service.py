@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 
 from auth.jwt import create_access_token
 from auth.password import hash_password, verify_password
-from db.user_service_db import (
+from src.db.users import (
     fetch_user_by_email,
     fetch_user_by_id,
     fetch_user_by_plate,

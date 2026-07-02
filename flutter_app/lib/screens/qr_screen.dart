@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../main.dart';
 import '../services/api_service.dart';
 import 'payment_details_screen.dart';
 
@@ -14,7 +15,7 @@ class QRScreen extends StatefulWidget {
   State<QRScreen> createState() => _QRScreenState();
 }
 
-class _QRScreenState extends State<QRScreen> {
+class _QRScreenState extends State<QRScreen> with RouteAware {
   final ApiService _apiService = ApiService();
   Uint8List? _qrBytes;
   String? _errorMessage;
@@ -27,7 +28,36 @@ class _QRScreenState extends State<QRScreen> {
     _loadQr();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadQr();
+  }
+
   Future<void> _loadQr() async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _errorMessage = null;
+        _qrBytes = null;
+        _parkingStatus = null;
+      });
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
@@ -36,6 +66,8 @@ class _QRScreenState extends State<QRScreen> {
       if (token == null || token.isEmpty) {
         setState(() {
           _errorMessage = 'Autentificăți-vă din nou';
+          _qrBytes = null;
+          _parkingStatus = null;
           _loading = false;
         });
         return;
@@ -50,12 +82,18 @@ class _QRScreenState extends State<QRScreen> {
       setState(() {
         _qrBytes = results[0] as Uint8List;
         _parkingStatus = results[1] as String;
+        _errorMessage = null;
         _loading = false;
       });
     } catch (error) {
       if (!mounted) return;
+      final errorText = error.toString();
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = errorText.contains('QR_NOT_FOUND')
+            ? 'Mașina nu se află în parcare'
+            : errorText;
+        _qrBytes = null;
+        _parkingStatus = null;
         _loading = false;
       });
     }
@@ -68,8 +106,10 @@ class _QRScreenState extends State<QRScreen> {
       case 'waiting_payment':
       case 'payment_expired':
         return 'Folosește acest cod pentru a plăti la terminal';
+      case 'invalid':
+        return 'Mașina nu se află în parcare';
       default:
-        return 'QR Code invalid sau expirat';
+        return 'Mașina nu se află în parcare';
     }
   }
 

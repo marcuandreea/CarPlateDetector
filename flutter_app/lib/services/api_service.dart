@@ -12,7 +12,7 @@ class ApiService {
 
   ApiService({
     this.baseUrl = 'http://127.0.0.1:8000',
-    this.apiKey = const String.fromEnvironment('PARKING_API_KEY'),
+    this.apiKey = const String.fromEnvironment('PARKING_API_KEYS'),
   });
 
   // Functie helper pentru a construi header-ele JSON
@@ -59,6 +59,11 @@ class ApiService {
 
   // Preia statusul masinii utilizatorului autentificat
   Future<String> getParkingStatus(String token) async {
+    final details = await getParkingStatusDetails(token);
+    return details['status']?.toString() ?? 'invalid';
+  }
+
+  Future<Map<String, dynamic>> getParkingStatusDetails(String token) async {
     final uri = Uri.parse('$baseUrl/parking-status');
     final response = await http.get(uri, headers: _jsonHeaders(token: token));
     if (response.statusCode != 200) {
@@ -67,9 +72,9 @@ class ApiService {
 
     final decoded = jsonDecode(response.body);
     if (decoded is Map<String, dynamic>) {
-      return decoded['status']?.toString() ?? 'invalid';
+      return decoded;
     }
-    return 'invalid';
+    return {'status': decoded?.toString() ?? 'invalid'};
   }
 
   Future<ParkingFee> getParkingFee(String token) async {
@@ -161,6 +166,9 @@ class ApiService {
   Future<Uint8List> getActiveQr(String token) async {
     final uri = Uri.parse('$baseUrl/active-qr');
     final response = await http.get(uri, headers: _jsonHeaders(token: token));
+    if (response.statusCode == 404) {
+      throw Exception('QR_NOT_FOUND');
+    }
     if (response.statusCode != 200) {
       throw Exception('Codul QR nu a putut fi incarcat (${response.statusCode})');
     }

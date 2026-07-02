@@ -7,6 +7,8 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 if str(BASE_DIR.parent) not in sys.path:
     sys.path.insert(0, str(BASE_DIR.parent))
+if str(BASE_DIR.parent.parent) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR.parent.parent))
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,8 +40,8 @@ from routes.health import router as health_router
 from routes.users import router as users_router
 from routes.parking import router as parking_router
 from routes.subscriptions import router as subscriptions_router
-from db.db import create_tables
-from db.user_service_db import ensure_users_table_exists
+from db.core import create_tables
+from db.users import ensure_users_table_exists
 
 # Middleware pentru rate limiting
 app.add_middleware(
