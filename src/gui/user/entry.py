@@ -101,6 +101,8 @@ class UserEntryMixin:
 
     def _save_detected_plate_qr(self, detected_text, cod):
         # Genereaza cod QR pentru textul detectat si il salveaza in folderul corespunzator (users sau visitors)
+        import time
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -118,10 +120,18 @@ class UserEntryMixin:
         qr_folder = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'qrcodes', qr_subfolder)
         if not os.path.exists(qr_folder):
             os.makedirs(qr_folder)
-        qr_filename = os.path.join(qr_folder, f"qr_{detected_text}.png")
+
+        unique_id = int(time.time() * 1000)
+        qr_filename = os.path.join(qr_folder, f"qr_{detected_text}_{unique_id}.png")
         qr_img.save(qr_filename)
 
         if user_row:
+            old_qr_path = user_row[6]
+            if old_qr_path and os.path.exists(os.path.abspath(old_qr_path)):
+                try:
+                    os.remove(os.path.abspath(old_qr_path))
+                except Exception:
+                    pass
             update_user_qr_path(user_row[0], os.path.abspath(qr_filename))
 
         debug_manager.log(f"QR generat si salvat la: {qr_filename}")

@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from .image_processor import ImageProcessor
 from .contour_analyzer import ContourAnalyzer
@@ -22,7 +23,13 @@ class LicensePlateDetector:
             return None, "", None
         
         if edges is None:
-            _ , edges = self.image_processor.preprocess_image(image)
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            filtered = cv2.bilateralFilter(gray, 11, 17, 17)
+            edges = cv2.Canny(filtered, 30, 200)
+
+            debug_manager.save_debug_image(gray, "gray.jpg")
+            debug_manager.save_debug_image(filtered, "filtered.jpg")
+            debug_manager.save_debug_image(edges, "edges.jpg")
 
         # Gasirea candidatilor pentru placute
         candidate_plates = self.contour_analyzer.find_license_plate_contours(image, edges)

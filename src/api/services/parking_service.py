@@ -110,7 +110,13 @@ def pay_user_parking(
             detail="Taxa de parcare a fost modificata. Reîncarcați pagina pentru a vedea noile detalii de plata.",
         )
 
-    if not pay_parking(parking_code):
+    payment_result = pay_parking(parking_code)
+    if payment_result == "already_paid":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Parcarea este deja achitata.",
+        )
+    if payment_result != "success":
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Plata pentru parcare nu a putut fi înregistrata. Va rugam sa încercați din nou mai tarziu.",
@@ -130,6 +136,15 @@ def get_user_active_qr(user_id: int):
     row = fetch_user_by_id(user_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilizatorul nu a fost gasit.")
+
+    numar_inmatriculare = row[5]
+    if not numar_inmatriculare:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niciun numar de inmatriculare asociat utilizatorului.")
+
+    parking_status = get_parking_status_by_plate(numar_inmatriculare)
+    if parking_status == "invalid":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Masina nu se afla in parcare.")
+
     qr_path = row[6]
     if not qr_path:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR-ul nu a fost gasit.")
@@ -140,4 +155,14 @@ def get_user_active_qr(user_id: int):
     if not os.path.exists(qr_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fișierul QR nu a fost gasit.")
 
-    return FileResponse(qr_path, media_type="image/png", filename=os.path.basename(qr_path))
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
+    return FileResponse(
+        qr_path,
+        media_type="image/png",
+        filename=os.path.basename(qr_path),
+        headers=headers,
+    )

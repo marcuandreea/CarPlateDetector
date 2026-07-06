@@ -18,7 +18,7 @@ class LiveEntryScannerThread(QThread):
     error = pyqtSignal(str)
     stopped = pyqtSignal()
 
-    def __init__(self, camera_index=1, roi_scale=0.6, motion_pixel_threshold=4000,
+    def __init__(self, camera_index=0, roi_scale=0.6, motion_pixel_threshold=4000,
                  processing_window_seconds=10.0, process_interval_seconds=0.3, enable_debug=False,
                  video_path=None):
         super().__init__()

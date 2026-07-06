@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 class ParkingFeeResponse(BaseModel):
     parking_code: str
     parked_minutes: int = Field(ge=0)
-    billable_minutes: int = Field(ge=0)
+    
+    _minutes: int = Field(ge=0)
     amount: float = Field(ge=0)
     currency: str = "RON"
 

@@ -36,6 +36,17 @@ class UserPaymentMixin:
                 self.pending_payment_code = None
                 return
 
+            if fee.get("is_paid"):
+                self.pay_status_label.show()
+                self.pay_status_label.setObjectName("statusSuccess")
+                self.pay_status_label.setText("  Parcarea este deja achitata")
+                self.pay_status_label.setStyle(self.pay_status_label.style())
+                self.pay_code_input.clear()
+                self.pay_code_input.hide()
+                self.pay_info_frame.hide()
+                self.pending_payment_code = None
+                return
+
             self.pay_minutes_label.setText(
                 f" Timp petrecut: {fee['parked_minutes']} minute"
             )
@@ -63,8 +74,8 @@ class UserPaymentMixin:
             self.pay_status_label.setStyle(self.pay_status_label.style())  # Force refresh
             return
 
-        success = pay_parking(self.pending_payment_code)
-        if success:
+        result = pay_parking(self.pending_payment_code)
+        if result == "success":
             self.pay_status_label.show()
             self.pay_status_label.setObjectName("statusSuccess")
             self.pay_status_label.setText("  Plata a fost inregistrata cu succes")
@@ -75,6 +86,11 @@ class UserPaymentMixin:
 
             self.pay_code_input.hide()
             self.pay_qr_preview.hide()
+        elif result == "already_paid":
+            self.pay_status_label.show()
+            self.pay_status_label.setObjectName("statusWarning")
+            self.pay_status_label.setText("  Parcarea este deja achitata")
+            self.pay_status_label.setStyle(self.pay_status_label.style())
         else:
             self.pay_status_label.show()
             self.pay_status_label.setObjectName("statusError")

@@ -63,29 +63,44 @@ def enter_parking(numar_inmatriculare: str) -> str | None:
             conn.close()
 
 
-def pay_parking(cod: str) -> bool:
+def pay_parking(cod: str) -> str:
     # Inregistreaza plata pentru masina
     conn = create_database_connection()
     if not conn:
-        return False
+        return "error"
 
     try:
         cursor = conn.cursor()
-        
+
+        # Verificam daca plata a fost deja efectuata
+        cursor.execute("""
+            SELECT ora_platire FROM masini WHERE cod = %s
+        """, (cod,))
+        row = cursor.fetchone()
+        if not row:
+            return "not_found"
+
+        ora_platire = row[0]
+        if ora_platire is not None:
+            elapsed_seconds = (datetime.now() - ora_platire).total_seconds()
+            if elapsed_seconds < 300:
+                return "already_paid"
+
         # Inregistram plata 
         cursor.execute("""
             UPDATE masini
             SET ora_platire = %s
             WHERE cod = %s
-        """, (datetime.now(), cod))
+              AND (ora_platire IS NULL OR ora_platire <= %s - INTERVAL '5 minutes')
+        """, (datetime.now(), cod, datetime.now()))
         conn.commit()
-        
-        return cursor.rowcount > 0
+
+        return "success" if cursor.rowcount > 0 else "not_found"
 
     except Exception as e:
         debug_manager.log(f"Eroare la pay_parking: {e}")
         conn.rollback()
-        return False
+        return "error"
 
     finally:
         if cursor:
@@ -162,12 +177,15 @@ def get_parking_fee(
                 amount = float(pret)
                 break
 
+        is_paid = ora_platire is not None and (datetime.now() - ora_platire).total_seconds() < 300
+
         return {
             "parking_code": parking_code,
             "license_plate": plate,
             "parked_minutes": parked_minutes,
             "billable_minutes": billable_minutes,
             "amount": amount,
+            "is_paid": is_paid,
         }
     except Exception as exc:
         debug_manager.log(f"Eroare la calcularea tarifului parcarii: {exc}")
@@ -237,7 +255,6 @@ def get_parking_status_by_plate(numar_inmatriculare: str) -> str:
 
 
 def _delete_parking_entry_and_cleanup(cursor, conn, cod: str) -> tuple[bool, str]:
-    # Sterge inregistrarea din `masini` pentru codul specificat
     cursor.execute(
         """
         DELETE FROM masini
@@ -251,10 +268,22 @@ def _delete_parking_entry_and_cleanup(cursor, conn, cod: str) -> tuple[bool, str
         return (False, "error")
 
     if deleted_row and deleted_row[0]:
+        plate = deleted_row[0]
         try:
-            _remove_qr_file(deleted_row[0])
+            _remove_qr_file(plate)
         except Exception as cleanup_error:
             debug_manager.log(f"Eroare la stergerea QR: {cleanup_error}")
+        try:
+            # Sterge referinta QR din tabelul users
+            cursor.execute(
+                """
+                UPDATE users SET qr_path = NULL
+                WHERE numar_inmatriculare = %s
+                """,
+                (plate,),
+            )
+        except Exception as cleanup_error:
+            debug_manager.log(f"Eroare la stergerea referintei QR din users: {cleanup_error}")
 
     conn.commit()
 

@@ -1,5 +1,6 @@
 import os
-from datetime import datetime
+
+import glob
 
 import psycopg2
 
@@ -13,9 +14,12 @@ def _remove_qr_file(numar_inmatriculare: str) -> None:
     # Sterge QR-ul din folderele users si visitors, daca exista
     base_folder = os.path.join(os.path.dirname(__file__), '..', '..', 'qrcodes')
     for subfolder in ('users', 'visitors'):
-        qr_filename = os.path.join(base_folder, subfolder, f"qr_{numar_inmatriculare}.png")
-        if os.path.exists(qr_filename):
-            os.remove(qr_filename)
+        pattern = os.path.join(base_folder, subfolder, f"qr_{numar_inmatriculare}*.png")
+        for qr_file in glob.glob(pattern):
+            try:
+                os.remove(qr_file)
+            except Exception:
+                pass
 
 
 def create_database_connection():

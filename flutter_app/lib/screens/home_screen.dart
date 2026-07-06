@@ -66,29 +66,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         final status = statusDetails['status']?.toString() ?? 'invalid';
         final graceSeconds = (statusDetails['grace_seconds_remaining'] as num?)?.toInt();
 
-        _graceTimer?.cancel();
         if (status == 'paid' && activeSubscription == null && graceSeconds != null && graceSeconds > 0) {
-          _graceSecondsRemaining = graceSeconds;
-          _graceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-            if (!mounted) {
-              timer.cancel();
-              return;
-            }
+          if (_graceTimer == null || !_graceTimer!.isActive) {
+            _graceSecondsRemaining = graceSeconds;
+            _graceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (!mounted) {
+                timer.cancel();
+                return;
+              }
 
-            final current = _graceSecondsRemaining ?? 0;
-            if (current <= 1) {
+              final current = _graceSecondsRemaining ?? 0;
+              if (current <= 1) {
+                setState(() {
+                  _graceSecondsRemaining = 0;
+                });
+                timer.cancel();
+                return;
+              }
+
               setState(() {
-                _graceSecondsRemaining = 0;
+                _graceSecondsRemaining = current - 1;
               });
-              timer.cancel();
-              return;
-            }
-
-            setState(() {
-              _graceSecondsRemaining = current - 1;
             });
-          });
+          }
         } else {
+          _graceTimer?.cancel();
           _graceSecondsRemaining = null;
         }
 
